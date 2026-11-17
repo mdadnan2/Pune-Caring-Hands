@@ -1,0 +1,230 @@
+// Pune Caring Hands — Prisma Schema
+// Phase 1 Foundation
+// Run: pnpm db:generate  →  generates Prisma Client
+// Run: pnpm db:migrate   →  applies migrations
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum BookingStatus {
+  REQUESTED
+  PAYMENT_PENDING
+  PAYMENT_VERIFICATION
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUBMITTED
+  VERIFIED
+  REJECTED
+}
+
+enum AppointmentType {
+  IMMEDIATE
+  SCHEDULED
+}
+
+// ─── Admin ────────────────────────────────────────────────────────────────────
+
+model Admin {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admins")
+}
+
+// ─── Patient ──────────────────────────────────────────────────────────────────
+
+model Patient {
+  id          String    @id @default(uuid())
+  name        String
+  phone       String    @unique
+  email       String?
+  address     String
+  dateOfBirth DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  bookings Booking[]
+
+  @@map("patients")
+}
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceItems ServiceItem[]
+  bookings     Booking[]
+
+  @@map("services")
+}
+
+// ServiceItem covers test-wise / type-wise pricing (e.g. blood tests, X-ray types)
+model ServiceItem {
+  id        String  @id @default(uuid())
+  serviceId String
+  name      String
+  price     Int // stored in INR (whole rupees)
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  service      Service       @relation(fields: [serviceId], references: [id])
+  bookingItems BookingItem[]
+
+  @@map("service_items")
+}
+
+// ─── Service Area ─────────────────────────────────────────────────────────────
+
+model ServiceArea {
+  id        String  @id @default(uuid())
+  name      String
+  pinCode   String  @unique
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("service_areas")
+}
+
+// ─── Slot ─────────────────────────────────────────────────────────────────────
+
+model Slot {
+  id          String   @id @default(uuid())
+  date        DateTime @db.Date
+  startTime   String // "09:00"
+  endTime     String // "10:00"
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@unique([date, startTime])
+  @@map("slots")
+}
+
+// ─── Booking ──────────────────────────────────────────────────────────────────
+
+model Booking {
+  id              String          @id @default(uuid())
+  bookingRef      String          @unique // human-readable e.g. PCH-20240101-0001
+  patientId       String
+  serviceId       String
+  slotId          String?
+  appointmentType AppointmentType
+  status          BookingStatus   @default(REQUESTED)
+  totalAmount     Int // INR — set by backend, never trusted from frontend
+  notes           String?
+  serviceDetails  Json? // service-specific fields (e.g. test names, prescription info)
+  ageAtBooking    Int? // snapshot of patient age at time of booking
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  service      Service       @relation(fields: [serviceId], references: [id])
+  slot         Slot?         @relation(fields: [slotId], references: [id])
+  bookingItems BookingItem[]
+  payment      Payment?
+
+  @@map("bookings")
+}
+
+model BookingItem {
+  id            String @id @default(uuid())
+  bookingId     String
+  serviceItemId String
+  name          String // snapshot of item name at booking time
+  price         Int // snapshot of price at booking time
+
+  booking     Booking     @relation(fields: [bookingId], references: [id])
+  serviceItem ServiceItem @relation(fields: [serviceItemId], references: [id])
+
+  @@map("booking_items")
+}
+
+// ─── Payment ──────────────────────────────────────────────────────────────────
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique
+  amount          Int // expected amount in INR
+  status          PaymentStatus @default(PENDING)
+  upiTransactionId String?
+  proofFileKey    String? // storage object key — not a public URL
+  submittedAt     DateTime?
+  verifiedAt      DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  patientName String
+  content    String
+  rating     Int      @default(5)
+  isActive   Boolean  @default(true)
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("testimonials")
+}
+
+model WebsiteContent {
+  id        String   @id @default(uuid())
+  key       String   @unique // e.g. "home_hero_title", "about_description"
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("website_content")
+}

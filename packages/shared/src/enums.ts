@@ -1,0 +1,34 @@
+// Booking lifecycle statuses
+export enum BookingStatus {
+  REQUESTED = 'REQUESTED',
+  PAYMENT_PENDING = 'PAYMENT_PENDING',
+  PAYMENT_VERIFICATION = 'PAYMENT_VERIFICATION',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+  COMPLETED = 'COMPLETED',
+  RESCHEDULED = 'RESCHEDULED',
+}
+
+// Payment statuses
+export enum PaymentStatus {
+  PENDING = 'PENDING',
+  SUBMITTED = 'SUBMITTED',
+  VERIFIED = 'VERIFIED',
+  REJECTED = 'REJECTED',
+}
+
+// Service types available in Phase 1
+export enum ServiceType {
+  DOCTOR_HOME_CONSULTATION = 'DOCTOR_HOME_CONSULTATION',
+  ECG_AT_HOME = 'ECG_AT_HOME',
+  BLOOD_TEST_AT_HOME = 'BLOOD_TEST_AT_HOME',
+  XRAY_AT_HOME = 'XRAY_AT_HOME',
+  MEDICINE_HOME_DELIVERY = 'MEDICINE_HOME_DELIVERY',
+  ONLINE_CONSULTATION = 'ONLINE_CONSULTATION',
+}
+
+// Booking appointment type
+export enum AppointmentType {
+  IMMEDIATE = 'IMMEDIATE',
+  SCHEDULED = 'SCHEDULED',
+}
