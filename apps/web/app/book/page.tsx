@@ -1,4 +1,4 @@
-import { BookingWizard } from '../../components/booking-wizard';
+import BookingWizard from '../../components/booking-wizard';
 
 export default function BookPage() {
   return (

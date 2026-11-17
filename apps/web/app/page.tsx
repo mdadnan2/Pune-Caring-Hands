@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { faqs, serviceAreas, services, testimonials } from '../lib/site-data';
+import { serviceAreas, services, testimonials } from '../lib/site-data';
 
 export default function HomePage() {
   return (

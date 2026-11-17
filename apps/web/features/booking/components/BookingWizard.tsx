@@ -97,7 +97,10 @@ export default function BookingWizard() {
   }, [form]);
 
   useEffect(() => {
-    if (!selectedService?.id) {
+    const currentService = selectedService;
+    const serviceId = currentService?.id;
+
+    if (!serviceId) {
       setSlots([]);
       return;
     }
@@ -108,7 +111,7 @@ export default function BookingWizard() {
       setIsLoadingSlots(true);
       setApiError('');
       try {
-        const result = await fetchAvailableSlots(selectedService.id);
+        const result = await fetchAvailableSlots(serviceId);
         if (!cancelled) {
           setSlots(result);
         }
@@ -128,7 +131,7 @@ export default function BookingWizard() {
     return () => {
       cancelled = true;
     };
-  }, [selectedService?.id]);
+  }, [selectedService]);
 
   useEffect(() => {
     const pinCode = form.watch('patientPinCode');
@@ -222,6 +225,22 @@ export default function BookingWizard() {
     }
 
     if (step === 2) {
+      if (selectedService?.slug === 'blood-test-at-home' && selectedItemIds.length === 0) {
+        form.setError('serviceItemIds', {
+          type: 'manual',
+          message: 'Select at least one blood test.',
+        });
+        return;
+      }
+
+      if (selectedService?.slug === 'xray-at-home' && selectedItemIds.length !== 1) {
+        form.setError('serviceItemIds', {
+          type: 'manual',
+          message: 'Select one X-Ray type.',
+        });
+        return;
+      }
+
       const isValid = await form.trigger([
         'chiefComplaint',
         'notes',
@@ -434,6 +453,32 @@ export default function BookingWizard() {
       );
     }
 
+    if (slug === 'ecg-at-home') {
+      return (
+        <div className="space-y-5">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            We will coordinate the ECG visit detail and ensure a qualified technician is scheduled for your preferred time.
+          </div>
+          <label className="block space-y-2 text-sm font-medium text-slate-700">
+            Reason for ECG / concern
+            <textarea
+              {...form.register('chiefComplaint')}
+              className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+              placeholder="Describe the cardiac concern or reason for the ECG"
+            />
+          </label>
+          <label className="block space-y-2 text-sm font-medium text-slate-700">
+            Notes for the technician
+            <textarea
+              {...form.register('notes')}
+              className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+              placeholder="Any relevant symptoms, timing preferences, or instructions"
+            />
+          </label>
+        </div>
+      );
+    }
+
     if (slug === 'blood-test-at-home') {
       return (
         <div className="space-y-4">
@@ -467,7 +512,7 @@ export default function BookingWizard() {
       );
     }
 
-    if (slug === 'x-ray-at-home') {
+    if (slug === 'xray-at-home') {
       return (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">Choose the X-Ray type.</p>

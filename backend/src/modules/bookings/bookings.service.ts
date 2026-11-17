@@ -22,6 +22,7 @@ export class BookingsService {
       where: { id: dto.serviceId, isActive: true },
       include: { serviceItems: { where: { isActive: true } } },
     });
+
     if (!service) {
       throw new NotFoundException({ message: 'Service not found', code: 'SERVICE_NOT_FOUND' });
     }
@@ -37,22 +38,44 @@ export class BookingsService {
       });
     }
 
+    if (dto.appointmentType === AppointmentType.SCHEDULED && !dto.slotId) {
+      throw new BadRequestException({
+        message: 'A time slot is required for scheduled appointments',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (service.slug === 'blood-test-at-home' && (!dto.serviceItemIds || dto.serviceItemIds.length === 0)) {
+      throw new BadRequestException({
+        message: 'Select at least one blood test.',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
+    if (service.slug === 'xray-at-home' && (!dto.serviceItemIds || dto.serviceItemIds.length !== 1)) {
+      throw new BadRequestException({
+        message: 'Select one X-Ray type.',
+        code: 'VALIDATION_ERROR',
+      });
+    }
+
     let totalAmount = 0;
     let validatedItemIds: string[] = [];
 
     if (service.basePrice !== null) {
       totalAmount = service.basePrice;
     } else if (dto.serviceItemIds && dto.serviceItemIds.length > 0) {
-      // Prisma item records are generated at runtime; keep this callback loosely typed for compatibility.
-      const items = service.serviceItems.filter((item: any) => dto.serviceItemIds!.includes(item.id));
-      if (items.length !== dto.serviceItemIds.length) {
+      const selectedItems = service.serviceItems.filter(
+        (item: { id: string; price: number }) => dto.serviceItemIds!.includes(item.id),
+      );
+      if (selectedItems.length !== dto.serviceItemIds.length) {
         throw new BadRequestException({
           message: 'One or more selected service items are invalid',
           code: 'INVALID_SERVICE_ITEM',
         });
       }
-      totalAmount = items.reduce((sum: number, item: any) => sum + item.price, 0);
-      validatedItemIds = items.map((item: any) => item.id);
+      totalAmount = selectedItems.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+      validatedItemIds = selectedItems.map((item: { id: string }) => item.id);
     } else if (prescriptionFileKey) {
       totalAmount = 0;
     } else {
@@ -62,9 +85,9 @@ export class BookingsService {
       });
     }
 
-    if (dto.appointmentType === AppointmentType.SCHEDULED && !dto.slotId) {
+    if (service.slug === 'medicine-home-delivery' && !prescriptionFileKey && !dto.notes) {
       throw new BadRequestException({
-        message: 'A time slot is required for scheduled appointments',
+        message: 'Prescription upload or notes are required for medicine delivery.',
         code: 'VALIDATION_ERROR',
       });
     }
@@ -82,8 +105,7 @@ export class BookingsService {
 
     const bookingRef = await this.generateBookingRef();
 
-    // Prisma transaction callbacks are typed via the generated client and accept a transaction client.
-    const booking = await this.prisma.$transaction(async (tx: any) => {
+    const booking = await this.prisma.$transaction(async (tx: PrismaService) => {
       const patient = await tx.patient.upsert({
         where: { phone: dto.patientPhone },
         update: {
@@ -109,6 +131,7 @@ export class BookingsService {
             code: 'SLOT_UNAVAILABLE',
           });
         }
+
         const existingBooking = await tx.booking.findUnique({ where: { slotId: dto.slotId } });
         if (existingBooking) {
           throw new ConflictException({
@@ -116,13 +139,20 @@ export class BookingsService {
             code: 'SLOT_UNAVAILABLE',
           });
         }
+
         await tx.slot.update({ where: { id: dto.slotId }, data: { isAvailable: false } });
       }
 
       const serviceDetails: Record<string, unknown> = { ...(dto.serviceDetails ?? {}) };
-      if (dto.patientAlternatePhone) serviceDetails.alternatePhone = dto.patientAlternatePhone;
-      if (dto.patientMapsLink) serviceDetails.mapsLink = dto.patientMapsLink;
-      if (prescriptionFileKey) serviceDetails.prescriptionFileKey = prescriptionFileKey;
+      if (dto.patientAlternatePhone) {
+        serviceDetails.alternatePhone = dto.patientAlternatePhone;
+      }
+      if (dto.patientMapsLink) {
+        serviceDetails.mapsLink = dto.patientMapsLink;
+      }
+      if (prescriptionFileKey) {
+        serviceDetails.prescriptionFileKey = prescriptionFileKey;
+      }
 
       const newBooking = await tx.booking.create({
         data: {
@@ -138,7 +168,16 @@ export class BookingsService {
           ageAtBooking: ageAtBooking ?? null,
           bookingItems: {
             create: validatedItemIds.map((itemId) => {
-              const item = service.serviceItems.find((serviceItem: any) => serviceItem.id === itemId)!;
+              const item = service.serviceItems.find(
+                (serviceItem: { id: string; name: string; price: number }) => serviceItem.id === itemId,
+              );
+              if (!item) {
+                throw new BadRequestException({
+                  message: 'One or more selected service items are invalid',
+                  code: 'INVALID_SERVICE_ITEM',
+                });
+              }
+
               return { serviceItemId: itemId, name: item.name, price: item.price };
             }),
           },
@@ -186,10 +225,11 @@ export class BookingsService {
         payment: { select: { id: true, amount: true, status: true } },
       },
     });
+
     if (!booking) {
       throw new NotFoundException({ message: 'Booking not found', code: 'BOOKING_NOT_FOUND' });
     }
-    // Return only safe public fields
+
     return {
       bookingRef: booking.bookingRef,
       status: booking.status,
@@ -208,12 +248,15 @@ export class BookingsService {
       where: { bookingRef },
       include: { payment: true },
     });
+
     if (!booking) {
       throw new NotFoundException({ message: 'Booking not found', code: 'BOOKING_NOT_FOUND' });
     }
+
     if (!booking.payment) {
       throw new BadRequestException({ message: 'Payment record not found', code: 'INTERNAL_ERROR' });
     }
+
     if (booking.payment.status !== PaymentStatus.PENDING) {
       throw new BadRequestException({
         message: 'Payment has already been submitted',
