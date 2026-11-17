@@ -10,7 +10,7 @@
     "test": "pnpm --recursive test",
     "format": "prettier --write \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,json,md}\" --ignore-path .gitignore",
-    "db:generate": "pnpm --filter backend prisma generate",
+    "db:generate": "node node_modules/.pnpm/prisma@5.19.1/node_modules/prisma/build/index.js generate --schema=prisma/schema.prisma",
     "db:migrate": "pnpm --filter backend prisma migrate dev",
     "db:seed": "pnpm --filter backend prisma db seed",
     "db:studio": "pnpm --filter backend prisma studio"

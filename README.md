@@ -82,12 +82,9 @@ pnpm db:migrate     # Run migrations
 pnpm db:seed        # Seed development data (creates admin user)
 ```
 
-Default seed admin credentials:
-
-- Email: `admin@punecalinghands.in`
-- Password: `Admin@123`
-
-**Change the admin password immediately after first login.**
+The seed script reads admin credentials from your `.env` file.
+Set `SEED_ADMIN_EMAIL` and `SEED_ADMIN_PASSWORD` before running `pnpm db:seed`.
+See `.env.example` for the required variables.
 
 ### 4. Start development servers
 

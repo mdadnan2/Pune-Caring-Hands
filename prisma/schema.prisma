@@ -74,14 +74,16 @@ model Service {
   name        String
   slug        String  @unique
   description String?
+  basePrice   Int?    // INR — set for fixed-price services; null for item-priced services
   isActive    Boolean @default(true)
   sortOrder   Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  serviceItems ServiceItem[]
-  bookings     Booking[]
+  serviceItems        ServiceItem[]
+  bookings            Booking[]
+  serviceAreaServices ServiceAreaService[]
 
   @@map("services")
 }
@@ -91,7 +93,7 @@ model ServiceItem {
   id        String  @id @default(uuid())
   serviceId String
   name      String
-  price     Int // stored in INR (whole rupees)
+  price     Int     // stored in INR (whole rupees)
   isActive  Boolean @default(true)
 
   createdAt DateTime @default(now())
@@ -100,20 +102,43 @@ model ServiceItem {
   service      Service       @relation(fields: [serviceId], references: [id])
   bookingItems BookingItem[]
 
+  @@index([serviceId])
   @@map("service_items")
 }
 
 // ─── Service Area ─────────────────────────────────────────────────────────────
 
+// ServiceArea defines which PIN codes are covered.
+// ServiceAreaService links specific services to specific areas,
+// allowing per-service coverage control (e.g. X-Ray only in certain areas).
+// If no ServiceAreaService rows exist for a service, it is treated as available in all active areas.
 model ServiceArea {
   id        String  @id @default(uuid())
   name      String
   pinCode   String  @unique
   isActive  Boolean @default(true)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  serviceAreaServices ServiceAreaService[]
+
   @@map("service_areas")
+}
+
+// Optional per-service PIN code restrictions.
+// Absence of rows = service available in all active ServiceArea PIN codes.
+model ServiceAreaService {
+  id            String @id @default(uuid())
+  serviceAreaId String
+  serviceId     String
+
+  serviceArea ServiceArea @relation(fields: [serviceAreaId], references: [id])
+  service     Service     @relation(fields: [serviceId], references: [id])
+
+  @@unique([serviceAreaId, serviceId])
+  @@index([serviceId])
+  @@map("service_area_services")
 }
 
 // ─── Slot ─────────────────────────────────────────────────────────────────────
@@ -121,15 +146,17 @@ model ServiceArea {
 model Slot {
   id          String   @id @default(uuid())
   date        DateTime @db.Date
-  startTime   String // "09:00"
-  endTime     String // "10:00"
+  startTime   String   // "09:00"
+  endTime     String   // "10:00"
   isAvailable Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  bookings Booking[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking? // one-to-one: one slot → at most one booking
 
   @@unique([date, startTime])
+  @@index([date])
   @@map("slots")
 }
 
@@ -140,7 +167,7 @@ model Booking {
   bookingRef      String          @unique // human-readable e.g. PCH-20240101-0001
   patientId       String
   serviceId       String
-  slotId          String?
+  slotId          String?         @unique // one slot → one booking enforced at DB level
   appointmentType AppointmentType
   status          BookingStatus   @default(REQUESTED)
   totalAmount     Int // INR — set by backend, never trusted from frontend
@@ -156,6 +183,10 @@ model Booking {
   bookingItems BookingItem[]
   payment      Payment?
 
+  @@index([patientId])
+  @@index([status])
+  @@index([serviceId])
+  @@index([createdAt])
   @@map("bookings")
 }
 
@@ -163,33 +194,39 @@ model BookingItem {
   id            String @id @default(uuid())
   bookingId     String
   serviceItemId String
-  name          String // snapshot of item name at booking time
-  price         Int // snapshot of price at booking time
+  name          String   // snapshot of item name at booking time
+  price         Int      // snapshot of price at booking time
+
+  createdAt DateTime @default(now())
 
   booking     Booking     @relation(fields: [bookingId], references: [id])
   serviceItem ServiceItem @relation(fields: [serviceItemId], references: [id])
 
+  @@index([bookingId])
   @@map("booking_items")
 }
 
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
 model Payment {
-  id              String        @id @default(uuid())
-  bookingId       String        @unique
-  amount          Int // expected amount in INR
-  status          PaymentStatus @default(PENDING)
+  id               String        @id @default(uuid())
+  bookingId        String        @unique
+  amount           Int           // expected amount in INR — set by backend
+  status           PaymentStatus @default(PENDING)
   upiTransactionId String?
-  proofFileKey    String? // storage object key — not a public URL
-  submittedAt     DateTime?
-  verifiedAt      DateTime?
-  rejectedAt      DateTime?
-  rejectionReason String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  proofFileKey     String?       // storage object key — NOT a public URL
+  submittedAt      DateTime?
+  verifiedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  verifiedByAdminId String?      // audit: which admin verified/rejected
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   booking Booking @relation(fields: [bookingId], references: [id])
 
+  @@index([status])
   @@map("payments")
 }
 
@@ -224,6 +261,8 @@ model WebsiteContent {
   id        String   @id @default(uuid())
   key       String   @unique // e.g. "home_hero_title", "about_description"
   value     String
+
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("website_content")

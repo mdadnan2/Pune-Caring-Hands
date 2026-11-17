@@ -1,23 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Global validation pipe — strips unknown properties, transforms types
+  app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: { enableImplicitConversion: true },
     }),
   );
 
-  // API versioning prefix
   app.setGlobalPrefix('api/v1');
 
-  // CORS — restrict origins via environment variable in production
   const corsOrigins = process.env.CORS_ORIGIN?.split(',') ?? ['http://localhost:3000'];
   app.enableCors({ origin: corsOrigins, credentials: true });
 

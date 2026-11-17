@@ -11,20 +11,21 @@
 
 ## Entities
 
-| Model            | Purpose                                                       |
-| ---------------- | ------------------------------------------------------------- |
-| `Admin`          | Admin user accounts                                           |
-| `Patient`        | Patient records created during booking                        |
-| `Service`        | Top-level services (e.g. Doctor Home Consultation)            |
-| `ServiceItem`    | Sub-items with individual pricing (e.g. specific blood tests) |
-| `ServiceArea`    | Supported Pune PIN codes and area names                       |
-| `Slot`           | Available appointment time slots                              |
-| `Booking`        | A patient's service booking                                   |
-| `BookingItem`    | Line items within a booking (for multi-item services)         |
-| `Payment`        | Payment record linked to a booking                            |
-| `FAQ`            | Frequently asked questions                                    |
-| `Testimonial`    | Patient testimonials                                          |
-| `WebsiteContent` | Key-value store for editable website content                  |
+| Model                | Purpose                                                       |
+| -------------------- | ------------------------------------------------------------- |
+| `Admin`              | Admin user accounts                                           |
+| `Patient`            | Patient records created during booking                        |
+| `Service`            | Top-level services (e.g. Doctor Home Consultation)            |
+| `ServiceItem`        | Sub-items with individual pricing (e.g. specific blood tests) |
+| `ServiceArea`        | Supported Pune PIN codes and area names                       |
+| `ServiceAreaService` | Optional per-service PIN code restrictions (join table)       |
+| `Slot`               | Available appointment time slots                              |
+| `Booking`            | A patient's service booking                                   |
+| `BookingItem`        | Line items within a booking (for multi-item services)         |
+| `Payment`            | Payment record linked to a booking                            |
+| `FAQ`                | Frequently asked questions                                    |
+| `Testimonial`        | Patient testimonials                                          |
+| `WebsiteContent`     | Key-value store for editable website content                  |
 
 ---
 
@@ -33,9 +34,10 @@
 ```
 Patient ──< Booking >── Service
 Booking ──< BookingItem >── ServiceItem
-Booking ──── Slot (optional for immediate requests)
+Booking ──── Slot (optional for immediate requests; @unique enforces one booking per slot)
 Booking ──── Payment (one-to-one)
 Service ──< ServiceItem
+ServiceArea ──< ServiceAreaService >── Service (optional per-service coverage)
 ```
 
 ---
@@ -63,6 +65,7 @@ Service ──< ServiceItem
 ### Pricing
 
 - Store prices as integers in INR (whole rupees) — no decimals
+- `Service.basePrice` stores the price for fixed-price services (Doctor, ECG, Online Consultation); `null` for item-priced services
 - `Booking.totalAmount` is set by the backend — never trusted from frontend
 - `BookingItem.price` is a snapshot of the price at booking time — preserves historical pricing
 - `BookingItem.name` is a snapshot of the item name at booking time
@@ -76,7 +79,8 @@ Service ──< ServiceItem
 ### Slot / Double-Booking Prevention
 
 - `Slot` has a unique constraint on `(date, startTime)`
-- One booking per slot — enforced at database level via the `Booking.slotId` unique constraint
+- One booking per slot — enforced at database level via `Booking.slotId @unique`
+- `Slot` has a one-to-one relation to `Booking` (not one-to-many)
 - Backend must use a database transaction when creating a booking + reserving a slot
 - Check slot availability inside the transaction — do not rely on pre-check alone
 
@@ -87,15 +91,29 @@ Service ──< ServiceItem
 - Payment status transitions are controlled by the backend only
 - Store `submittedAt`, `verifiedAt`, `rejectedAt` timestamps for audit trail
 
+### Service Area
+
+- `ServiceArea` defines which PIN codes are covered
+- `ServiceAreaService` is an optional join table for per-service PIN code restrictions
+- If no `ServiceAreaService` rows exist for a service, the service is treated as available in all active `ServiceArea` PIN codes
+- Backend validates the patient's PIN code against `ServiceArea` (and `ServiceAreaService` if rows exist) during booking creation
+
 ### Indexes
 
 - Index `Patient.phone` (unique)
 - Index `Booking.bookingRef` (unique)
 - Index `Booking.patientId`
 - Index `Booking.status`
+- Index `Booking.serviceId`
+- Index `Booking.createdAt`
 - Index `Payment.status`
 - Index `ServiceArea.pinCode` (unique)
+- Index `ServiceAreaService.(serviceAreaId, serviceId)` (unique)
+- Index `ServiceAreaService.serviceId`
+- Index `ServiceItem.serviceId`
+- Index `BookingItem.bookingId`
 - Index `Slot.(date, startTime)` (unique)
+- Index `Slot.date`
 
 ### Migrations
 
