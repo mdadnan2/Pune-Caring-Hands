@@ -9,7 +9,20 @@ import {
   IsDateString,
   IsObject,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { AppointmentType } from '@pch/shared';
+
+function parseMultipartJson({ value }: { value: unknown }): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return value;
+  }
+}
 
 export class CreateBookingDto {
   @IsUUID()
@@ -53,11 +66,13 @@ export class CreateBookingDto {
   slotId?: string;
 
   @IsOptional()
+  @Transform(parseMultipartJson)
   @IsArray()
   @IsUUID('4', { each: true })
   serviceItemIds?: string[];
 
   @IsOptional()
+  @Transform(parseMultipartJson)
   @IsObject()
   serviceDetails?: Record<string, unknown>;
 

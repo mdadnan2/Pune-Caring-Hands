@@ -16,6 +16,10 @@ export const ADMIN_API_PREFIX = '/api/v1/admin';
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 100;
 
+// Prescription uploads: keep the frontend and backend on the same accepted formats and limit.
+export const UPLOAD_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'application/pdf'] as const;
+export const UPLOAD_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+
 // Supported Pune PIN codes (Phase 1 — extend as needed)
 export const PUNE_CITY = 'Pune';
 export const SUPPORTED_STATE = 'Maharashtra';

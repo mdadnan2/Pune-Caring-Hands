@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter './apps/*' --filter './backend' dev",
-    "build": "pnpm --filter './packages/*' build && pnpm --parallel --filter './apps/*' --filter './backend' build",
+    "build": "pnpm --filter @pch/shared build && pnpm --parallel --filter @pch/admin --filter @pch/web --filter backend build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",
     "test": "pnpm --recursive test",

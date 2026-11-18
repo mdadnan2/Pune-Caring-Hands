@@ -9,17 +9,12 @@ import {
   UploadedFiles,
 } from '@nestjs/common';
 import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
+import { UPLOAD_MAX_FILE_SIZE_BYTES } from '@pch/shared';
 import { BookingsService } from './bookings.service';
 import { UploadsService } from '../uploads/uploads.service';
+import type { UploadedFile as BookingUploadedFile } from '../uploads/uploads.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { SubmitPaymentDto } from './dto/submit-payment.dto';
-
-type UploadedFile = {
-  originalname: string;
-  mimetype: string;
-  size: number;
-  buffer: Buffer;
-};
 
 @Controller('bookings')
 export class BookingsController {
@@ -34,34 +29,17 @@ export class BookingsController {
    */
   @Post()
   @UseInterceptors(
-    FileFieldsInterceptor([{ name: 'prescription', maxCount: 1 }], { storage: undefined }),
+    FileFieldsInterceptor([{ name: 'prescription', maxCount: 1 }], {
+      storage: undefined,
+      limits: { fileSize: UPLOAD_MAX_FILE_SIZE_BYTES, files: 1 },
+    }),
   )
   async create(
     @Body() dto: CreateBookingDto,
-    @UploadedFiles() files?: { prescription?: UploadedFile[] },
+    @UploadedFiles() files?: { prescription?: BookingUploadedFile[] },
   ) {
-    let prescriptionFileKey: string | undefined;
     const prescriptionFile = files?.prescription?.[0];
-    if (prescriptionFile) {
-      // We don't have bookingRef yet — use a temp placeholder; will be replaced after booking creation
-      // Actually we save after booking creation below
-      this.uploadsService.validateFile(prescriptionFile);
-    }
-
-    const booking = await this.bookingsService.create(dto);
-
-    if (prescriptionFile) {
-      prescriptionFileKey = await this.uploadsService.saveFile(
-        prescriptionFile,
-        'prescriptions',
-        booking.bookingRef,
-        'prescription',
-      );
-      // Update serviceDetails with the file key
-      await this.updatePrescriptionKey(booking.id, prescriptionFileKey);
-    }
-
-    return booking;
+    return this.bookingsService.create(dto, prescriptionFile);
   }
 
   @Get(':bookingRef')
@@ -78,7 +56,7 @@ export class BookingsController {
   async submitPayment(
     @Param('bookingRef') bookingRef: string,
     @Body() dto: SubmitPaymentDto,
-    @UploadedFile() proofFile?: UploadedFile,
+    @UploadedFile() proofFile?: BookingUploadedFile,
   ) {
     let proofFileKey: string | undefined;
     if (proofFile) {
@@ -86,11 +64,5 @@ export class BookingsController {
       proofFileKey = await this.uploadsService.saveFile(proofFile, 'payments', bookingRef, 'proof');
     }
     return this.bookingsService.submitPaymentProof(bookingRef, dto, proofFileKey);
-  }
-
-  private async updatePrescriptionKey(bookingId: string, key: string) {
-    // Import PrismaService via the service to avoid direct access in controller
-    // This is a thin wrapper — actual logic delegated
-    await this.bookingsService.updatePrescriptionKey(bookingId, key);
   }
 }

@@ -6,7 +6,7 @@ export class SlotsController {
   constructor(private readonly slotsService: SlotsService) {}
 
   @Get('available')
-  findAvailable(@Query('serviceId') serviceId?: string, @Query('date') date?: string) {
-    return this.slotsService.findAvailable({ serviceId, date });
+  findAvailable(@Query('date') date?: string, @Query('serviceId') _serviceId?: string) {
+    return this.slotsService.findAvailable(date);
   }
 }

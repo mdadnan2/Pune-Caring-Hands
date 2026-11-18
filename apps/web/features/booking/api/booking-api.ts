@@ -13,16 +13,25 @@ export async function fetchServices(): Promise<ServiceApiItem[]> {
   return getServices();
 }
 
-export async function fetchAvailableSlots(serviceId?: string, date?: string): Promise<BookingSlot[]> {
+export async function fetchAvailableSlots(
+  serviceId?: string,
+  date?: string,
+): Promise<BookingSlot[]> {
   return getAvailableSlots(serviceId, date);
 }
 
-export async function checkServiceAreaSupport(pinCode: string, serviceId: string): Promise<boolean> {
+export async function checkServiceAreaSupport(
+  pinCode: string,
+  serviceId: string,
+): Promise<boolean> {
   return validateServiceArea(pinCode, serviceId);
 }
 
-export async function submitBooking(payload: Record<string, unknown>): Promise<{ bookingRef: string }> {
-  return createBooking(payload);
+export async function submitBooking(
+  payload: Record<string, unknown>,
+  prescription?: File,
+): Promise<{ bookingRef: string }> {
+  return createBooking(payload, prescription);
 }
 
 export async function fetchBookingByRef(bookingRef: string): Promise<BookingRecord> {

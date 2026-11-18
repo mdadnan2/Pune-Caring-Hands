@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { UPLOAD_ALLOWED_MIME_TYPES } from '@pch/shared';
 import {
   checkServiceAreaSupport,
   fetchAvailableSlots,
@@ -17,6 +18,7 @@ const stepTitles = ['Service', 'Patient', 'Details', 'Slot', 'Review'];
 
 const defaultValues: BookingWizardValues = {
   serviceId: '',
+  serviceSlug: '',
   appointmentType: 'SCHEDULED',
   patientName: '',
   patientDateOfBirth: '',
@@ -35,13 +37,58 @@ const defaultValues: BookingWizardValues = {
   notes: '',
   serviceItemIds: [],
   slotId: '',
+  prescription: undefined,
 };
+
+function getServiceDetails(
+  serviceSlug: string,
+  values: BookingWizardValues,
+): Record<string, unknown> | undefined {
+  if (serviceSlug === 'doctor-home-consultation') {
+    return {
+      gender: values.gender,
+      chiefComplaint: values.chiefComplaint?.trim(),
+      symptomDuration: values.symptomDuration || undefined,
+      existingConditions: values.existingConditions || undefined,
+      currentMedicines: values.currentMedicines || undefined,
+      allergies: values.allergies || undefined,
+      appointmentPreference: values.appointmentType,
+    };
+  }
+  if (serviceSlug === 'ecg-at-home') {
+    return {
+      gender: values.gender,
+      chiefComplaint: values.chiefComplaint?.trim() || undefined,
+    };
+  }
+  if (serviceSlug === 'online-consultation') {
+    return {
+      gender: values.gender,
+      chiefComplaint: values.chiefComplaint?.trim(),
+    };
+  }
+  return undefined;
+}
+
+function getCurrentPuneDate(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((value) => value.type === type)?.value ?? '';
+
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
 
 export default function BookingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [services, setServices] = useState<ServiceApiItem[]>([]);
   const [slots, setSlots] = useState<BookingSlot[]>([]);
+  const [selectedSlotDate, setSelectedSlotDate] = useState('');
   const [isLoadingServices, setIsLoadingServices] = useState(true);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +110,10 @@ export default function BookingWizard() {
   const appointmentType = form.watch('appointmentType');
 
   useEffect(() => {
+    setSelectedSlotDate(getCurrentPuneDate());
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadServices() {
@@ -76,6 +127,7 @@ export default function BookingWizard() {
 
           if (!form.getValues('serviceId')) {
             form.setValue('serviceId', result[0].id, { shouldValidate: true });
+            form.setValue('serviceSlug', result[0].slug, { shouldValidate: true });
           }
         }
       } catch (error) {
@@ -100,7 +152,7 @@ export default function BookingWizard() {
     const currentService = selectedService;
     const serviceId = currentService?.id;
 
-    if (!serviceId) {
+    if (!serviceId || !selectedSlotDate) {
       setSlots([]);
       return;
     }
@@ -109,9 +161,10 @@ export default function BookingWizard() {
 
     async function loadSlots() {
       setIsLoadingSlots(true);
+      setSlots([]);
       setApiError('');
       try {
-        const result = await fetchAvailableSlots(serviceId);
+        const result = await fetchAvailableSlots(serviceId, selectedSlotDate);
         if (!cancelled) {
           setSlots(result);
         }
@@ -131,7 +184,7 @@ export default function BookingWizard() {
     return () => {
       cancelled = true;
     };
-  }, [selectedService]);
+  }, [selectedService, selectedSlotDate]);
 
   useEffect(() => {
     const pinCode = form.watch('patientPinCode');
@@ -210,7 +263,10 @@ export default function BookingWizard() {
         return;
       }
 
-      const supported = await checkServiceAreaSupport(form.getValues('patientPinCode'), selectedService.id);
+      const supported = await checkServiceAreaSupport(
+        form.getValues('patientPinCode'),
+        selectedService.id,
+      );
       if (!supported) {
         form.setError('patientPinCode', {
           type: 'manual',
@@ -245,6 +301,7 @@ export default function BookingWizard() {
         'chiefComplaint',
         'notes',
         'serviceItemIds',
+        'prescription',
       ]);
       if (!isValid) {
         return;
@@ -286,19 +343,19 @@ export default function BookingWizard() {
         patientDateOfBirth: values.patientDateOfBirth || undefined,
         slotId: values.appointmentType === 'SCHEDULED' ? values.slotId || undefined : undefined,
         serviceItemIds: values.serviceItemIds.length ? values.serviceItemIds : undefined,
-        notes: values.notes || undefined,
-        serviceDetails: {
-          gender: values.gender,
-          chiefComplaint: values.chiefComplaint,
-          symptomDuration: values.symptomDuration || undefined,
-          existingConditions: values.existingConditions || undefined,
-          currentMedicines: values.currentMedicines || undefined,
-          allergies: values.allergies || undefined,
-          appointmentPreference: values.appointmentType,
-        },
+        notes:
+          selectedService.slug === 'ecg-at-home' ||
+          selectedService.slug === 'medicine-home-delivery' ||
+          selectedService.slug === 'online-consultation'
+            ? values.notes || undefined
+            : undefined,
+        serviceDetails: getServiceDetails(selectedService.slug, values),
       };
 
-      const result = await submitBooking(payload);
+      const result = await submitBooking(
+        payload,
+        selectedService.slug === 'medicine-home-delivery' ? values.prescription : undefined,
+      );
       router.push(`/book/confirmation/${result.bookingRef}`);
     } catch (error) {
       setApiError(error instanceof Error ? error.message : 'Booking creation failed.');
@@ -318,7 +375,24 @@ export default function BookingWizard() {
           <button
             key={service.id}
             type="button"
-            onClick={() => form.setValue('serviceId', service.id, { shouldValidate: true })}
+            onClick={() => {
+              if (selectedServiceId !== service.id) {
+                form.setValue('serviceItemIds', []);
+                form.setValue('slotId', '');
+                form.setValue('appointmentType', 'SCHEDULED');
+                form.setValue('chiefComplaint', '');
+                form.setValue('symptomDuration', '');
+                form.setValue('existingConditions', '');
+                form.setValue('currentMedicines', '');
+                form.setValue('allergies', '');
+                form.setValue('notes', '');
+                form.setValue('prescription', undefined);
+                form.clearErrors(['chiefComplaint', 'serviceItemIds', 'prescription', 'slotId']);
+              }
+              form.setValue('serviceId', service.id, { shouldValidate: true });
+              form.setValue('serviceSlug', service.slug, { shouldValidate: true });
+              setApiError('');
+            }}
             className={`rounded-2xl border p-5 text-left transition ${
               selectedServiceId === service.id
                 ? 'border-navy-700 bg-navy-50 shadow-sm'
@@ -326,7 +400,9 @@ export default function BookingWizard() {
             }`}
           >
             <p className="text-sm font-semibold text-teal-700">
-              {service.basePrice !== null ? `₹${service.basePrice.toLocaleString('en-IN')}` : 'Price varies'}
+              {service.basePrice !== null
+                ? `₹${service.basePrice.toLocaleString('en-IN')}`
+                : 'Price varies'}
             </p>
             <h3 className="mt-3 text-lg font-semibold text-slate-900">{service.name}</h3>
             <p className="mt-2 text-sm text-slate-600">{service.description}</p>
@@ -340,7 +416,10 @@ export default function BookingWizard() {
     <div className="grid gap-4 md:grid-cols-2">
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Full name
-        <input {...form.register('patientName')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" />
+        <input
+          {...form.register('patientName')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+        />
         {form.formState.errors.patientName ? (
           <span className="text-xs text-red-600">{form.formState.errors.patientName.message}</span>
         ) : null}
@@ -348,12 +427,19 @@ export default function BookingWizard() {
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Date of birth
-        <input type="date" {...form.register('patientDateOfBirth')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" />
+        <input
+          type="date"
+          {...form.register('patientDateOfBirth')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+        />
       </label>
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Gender
-        <select {...form.register('gender')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5">
+        <select
+          {...form.register('gender')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+        >
           <option value="MALE">Male</option>
           <option value="FEMALE">Female</option>
           <option value="OTHER">Other</option>
@@ -362,7 +448,11 @@ export default function BookingWizard() {
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Mobile
-        <input {...form.register('patientPhone')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="9876543210" />
+        <input
+          {...form.register('patientPhone')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="9876543210"
+        />
         {form.formState.errors.patientPhone ? (
           <span className="text-xs text-red-600">{form.formState.errors.patientPhone.message}</span>
         ) : null}
@@ -370,33 +460,57 @@ export default function BookingWizard() {
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Alternate mobile (optional)
-        <input {...form.register('patientAlternatePhone')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="9876543211" />
+        <input
+          {...form.register('patientAlternatePhone')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="9876543211"
+        />
       </label>
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Email (optional)
-        <input {...form.register('patientEmail')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="you@example.com" />
+        <input
+          {...form.register('patientEmail')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="you@example.com"
+        />
       </label>
 
       <label className="space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
         Complete address
-        <textarea {...form.register('patientAddress')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="House no, street, area, city" />
+        <textarea
+          {...form.register('patientAddress')}
+          className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="House no, street, area, city"
+        />
         {form.formState.errors.patientAddress ? (
-          <span className="text-xs text-red-600">{form.formState.errors.patientAddress.message}</span>
+          <span className="text-xs text-red-600">
+            {form.formState.errors.patientAddress.message}
+          </span>
         ) : null}
       </label>
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         PIN code
-        <input {...form.register('patientPinCode')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="411001" />
+        <input
+          {...form.register('patientPinCode')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="411001"
+        />
         {form.formState.errors.patientPinCode ? (
-          <span className="text-xs text-red-600">{form.formState.errors.patientPinCode.message}</span>
+          <span className="text-xs text-red-600">
+            {form.formState.errors.patientPinCode.message}
+          </span>
         ) : null}
       </label>
 
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Google Maps link (optional)
-        <input {...form.register('patientMapsLink')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="https://maps.google.com/..." />
+        <input
+          {...form.register('patientMapsLink')}
+          className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          placeholder="https://maps.google.com/..."
+        />
       </label>
     </div>
   );
@@ -412,14 +526,20 @@ export default function BookingWizard() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => form.setValue('appointmentType', 'IMMEDIATE')}
+              onClick={() => {
+                form.setValue('appointmentType', 'IMMEDIATE');
+                form.setValue('slotId', '');
+              }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'IMMEDIATE' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
               Immediate request
             </button>
             <button
               type="button"
-              onClick={() => form.setValue('appointmentType', 'SCHEDULED')}
+              onClick={() => {
+                form.setValue('appointmentType', 'SCHEDULED');
+                form.setValue('slotId', '');
+              }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'SCHEDULED' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
               Scheduled appointment
@@ -428,25 +548,50 @@ export default function BookingWizard() {
 
           <label className="block space-y-2 text-sm font-medium text-slate-700">
             Main complaint
-            <textarea {...form.register('chiefComplaint')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Describe the issue" />
+            <textarea
+              {...form.register('chiefComplaint')}
+              className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+              placeholder="Describe the issue"
+            />
+            {form.formState.errors.chiefComplaint ? (
+              <span className="text-xs text-red-600">
+                {form.formState.errors.chiefComplaint.message}
+              </span>
+            ) : null}
           </label>
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Symptom duration
-              <input {...form.register('symptomDuration')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="2 days" />
+              <input
+                {...form.register('symptomDuration')}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+                placeholder="2 days"
+              />
             </label>
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Existing conditions
-              <input {...form.register('existingConditions')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Diabetes, asthma..." />
+              <input
+                {...form.register('existingConditions')}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+                placeholder="Diabetes, asthma..."
+              />
             </label>
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Current medicines
-              <input {...form.register('currentMedicines')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="List current medicines" />
+              <input
+                {...form.register('currentMedicines')}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+                placeholder="List current medicines"
+              />
             </label>
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Allergies / history
-              <input {...form.register('allergies')} className="w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Medicines or food allergies" />
+              <input
+                {...form.register('allergies')}
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+                placeholder="Medicines or food allergies"
+              />
             </label>
           </div>
         </div>
@@ -457,7 +602,8 @@ export default function BookingWizard() {
       return (
         <div className="space-y-5">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            We will coordinate the ECG visit detail and ensure a qualified technician is scheduled for your preferred time.
+            We will coordinate the ECG visit detail and ensure a qualified technician is scheduled
+            for your preferred time.
           </div>
           <label className="block space-y-2 text-sm font-medium text-slate-700">
             Reason for ECG / concern
@@ -502,12 +648,17 @@ export default function BookingWizard() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold text-slate-900">{item.name}</span>
-                    <span className="text-sm text-teal-700">₹{item.price.toLocaleString('en-IN')}</span>
+                    <span className="text-sm text-teal-700">
+                      ₹{item.price.toLocaleString('en-IN')}
+                    </span>
                   </div>
                 </button>
               );
             })}
           </div>
+          {form.formState.errors.serviceItemIds ? (
+            <p className="text-sm text-red-600">{form.formState.errors.serviceItemIds.message}</p>
+          ) : null}
         </div>
       );
     }
@@ -523,16 +674,23 @@ export default function BookingWizard() {
                 type="button"
                 onClick={() => form.setValue('serviceItemIds', [item.id], { shouldValidate: true })}
                 className={`rounded-xl border p-4 text-left ${
-                  selectedItemIds.includes(item.id) ? 'border-navy-700 bg-navy-50' : 'border-slate-200 bg-white'
+                  selectedItemIds.includes(item.id)
+                    ? 'border-navy-700 bg-navy-50'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-900">{item.name}</span>
-                  <span className="text-sm text-teal-700">₹{item.price.toLocaleString('en-IN')}</span>
+                  <span className="text-sm text-teal-700">
+                    ₹{item.price.toLocaleString('en-IN')}
+                  </span>
                 </div>
               </button>
             ))}
           </div>
+          {form.formState.errors.serviceItemIds ? (
+            <p className="text-sm text-red-600">{form.formState.errors.serviceItemIds.message}</p>
+          ) : null}
         </div>
       );
     }
@@ -541,15 +699,37 @@ export default function BookingWizard() {
       return (
         <div className="space-y-4">
           <label className="block space-y-2 text-sm font-medium text-slate-700">
-            Prescription notes
+            Prescription file
+            <input
+              key={selectedServiceId}
+              type="file"
+              accept={UPLOAD_ALLOWED_MIME_TYPES.join(',')}
+              onChange={(event) => {
+                form.setValue('prescription', event.target.files?.[0], { shouldValidate: true });
+                setApiError('');
+              }}
+              className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+            />
+            <span className="text-xs font-normal text-slate-500">
+              JPEG, PNG, or PDF. Maximum 5MB.
+            </span>
+            {form.formState.errors.prescription ? (
+              <span className="text-xs text-red-600">
+                {form.formState.errors.prescription.message}
+              </span>
+            ) : null}
+          </label>
+          <label className="block space-y-2 text-sm font-medium text-slate-700">
+            Additional delivery notes (optional)
             <textarea
               {...form.register('notes')}
               className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
-              placeholder="Upload your prescription or share notes for review"
+              placeholder="Share any delivery instructions"
             />
           </label>
           <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
-            Prescription upload is required for medicine delivery. The next phase will complete the upload and verification flow.
+            Your prescription is uploaded securely with your booking request and will be reviewed by
+            our care team.
           </div>
         </div>
       );
@@ -560,27 +740,31 @@ export default function BookingWizard() {
         <div className="space-y-4">
           <label className="block space-y-2 text-sm font-medium text-slate-700">
             Reason for consultation
-            <textarea {...form.register('chiefComplaint')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Describe the concern" />
+            <textarea
+              {...form.register('chiefComplaint')}
+              className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+              placeholder="Describe the concern"
+            />
+            {form.formState.errors.chiefComplaint ? (
+              <span className="text-xs text-red-600">
+                {form.formState.errors.chiefComplaint.message}
+              </span>
+            ) : null}
           </label>
           <label className="block space-y-2 text-sm font-medium text-slate-700">
             Additional notes
-            <textarea {...form.register('notes')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Any additional context" />
+            <textarea
+              {...form.register('notes')}
+              className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
+              placeholder="Any additional context"
+            />
           </label>
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        <label className="block space-y-2 text-sm font-medium text-slate-700">
-          Main complaint
-          <textarea {...form.register('chiefComplaint')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Describe the issue" />
-        </label>
-        <label className="block space-y-2 text-sm font-medium text-slate-700">
-          Additional notes
-          <textarea {...form.register('notes')} className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5" placeholder="Optional notes" />
-        </label>
-      </div>
+      <p className="text-sm text-red-700">This service is not available for online booking.</p>
     );
   };
 
@@ -588,36 +772,60 @@ export default function BookingWizard() {
     if (appointmentType === 'IMMEDIATE') {
       return (
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-700">
-          The earliest available doctor request will be reviewed by our care team. No specific slot is selected at this stage.
+          The earliest available doctor request will be reviewed by our care team. No specific slot
+          is selected at this stage.
         </div>
       );
     }
 
-    if (isLoadingSlots) {
-      return <p className="text-sm text-slate-600">Loading available slots...</p>;
-    }
-
-    if (!slots.length) {
-      return <p className="text-sm text-slate-600">No available slots for this service right now. Please try a different date or service.</p>;
-    }
-
     return (
-      <div className="grid gap-3 md:grid-cols-2">
-        {slots.map((slot) => (
-          <button
-            key={slot.id}
-            type="button"
-            onClick={() => form.setValue('slotId', slot.id, { shouldValidate: true })}
-            className={`rounded-xl border p-4 text-left ${
-              form.watch('slotId') === slot.id ? 'border-navy-700 bg-navy-50' : 'border-slate-200 bg-white'
-            }`}
-          >
-            <p className="font-semibold text-slate-900">{new Date(slot.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-            <p className="mt-2 text-sm text-slate-600">
-              {slot.startTime} - {slot.endTime}
-            </p>
-          </button>
-        ))}
+      <div className="space-y-5">
+        <label className="block space-y-2 text-sm font-medium text-slate-700">
+          Appointment date
+          <input
+            type="date"
+            min={getCurrentPuneDate()}
+            value={selectedSlotDate}
+            onChange={(event) => {
+              setSelectedSlotDate(event.target.value);
+              form.setValue('slotId', '', { shouldValidate: true });
+            }}
+            className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
+          />
+        </label>
+        {isLoadingSlots ? (
+          <p className="text-sm text-slate-600">Loading available slots...</p>
+        ) : !slots.length ? (
+          <p className="text-sm text-slate-600">
+            No available slots on this date. Please choose another date.
+          </p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {slots.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                onClick={() => form.setValue('slotId', slot.id, { shouldValidate: true })}
+                className={`rounded-xl border p-4 text-left ${
+                  form.watch('slotId') === slot.id
+                    ? 'border-navy-700 bg-navy-50'
+                    : 'border-slate-200 bg-white'
+                }`}
+              >
+                <p className="font-semibold text-slate-900">
+                  {new Date(slot.date).toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                  })}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {slot.startTime} - {slot.endTime}
+                </p>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     );
   };
@@ -647,11 +855,15 @@ export default function BookingWizard() {
           </div>
           <div>
             <p className="text-sm text-slate-500">Appointment</p>
-            <p className="font-medium text-slate-900">{appointmentType === 'IMMEDIATE' ? 'Immediate request' : 'Scheduled'}</p>
+            <p className="font-medium text-slate-900">
+              {appointmentType === 'IMMEDIATE' ? 'Immediate request' : 'Scheduled'}
+            </p>
           </div>
           <div>
             <p className="text-sm text-slate-500">Amount</p>
-            <p className="font-medium text-slate-900">₹{selectedServiceAmount.toLocaleString('en-IN')}</p>
+            <p className="font-medium text-slate-900">
+              ₹{selectedServiceAmount.toLocaleString('en-IN')}
+            </p>
           </div>
         </div>
       </div>

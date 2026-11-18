@@ -44,8 +44,12 @@ export type BookingRecord = {
 };
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
+    headers: {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...init?.headers,
+    },
     ...init,
   });
 
@@ -82,7 +86,26 @@ export async function getAvailableSlots(serviceId?: string, date?: string): Prom
   return apiFetch<BookingSlot[]>(`/slots/available${query ? `?${query}` : ''}`);
 }
 
-export async function createBooking(data: Record<string, unknown>): Promise<{ bookingRef: string }> {
+export async function createBooking(
+  data: Record<string, unknown>,
+  prescription?: File,
+): Promise<{ bookingRef: string }> {
+  if (prescription) {
+    const formData = new FormData();
+    for (const [key, value] of Object.entries(data)) {
+      if (value === undefined || value === null) {
+        continue;
+      }
+      formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+    }
+    formData.append('prescription', prescription);
+
+    return apiFetch<{ bookingRef: string }>('/bookings', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
   return apiFetch<{ bookingRef: string }>('/bookings', {
     method: 'POST',
     body: JSON.stringify(data),
