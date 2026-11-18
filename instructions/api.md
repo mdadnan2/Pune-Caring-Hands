@@ -152,19 +152,22 @@ Missing or invalid token returns:
 Use `multipart/form-data` for file upload endpoints.
 
 ```
-POST /api/v1/bookings/:id/payment/proof
+GET  /api/v1/payments/instructions
+POST /api/v1/payments/:bookingRef/proof
 Content-Type: multipart/form-data
 
 Fields:
-  - file: (binary)
-  - upiTransactionId: string
+  - proof: (required binary payment screenshot)
 ```
 
 Backend validates:
 
 - File type (JPEG, PNG, PDF only)
 - File size (max 5MB)
-- Booking exists and belongs to the correct state
+- Booking exists and accepts a payment proof in its current state
+- Proof is validated by file signature as well as upload metadata
+
+Admin proof and prescription files are served only through authenticated admin booking routes.
 
 ---
 

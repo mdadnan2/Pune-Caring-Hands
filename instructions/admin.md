@@ -9,6 +9,16 @@ All authenticated admins have access to all admin functionality.
 
 ---
 
+## Implemented Phase 2A/2B Booking Slice
+
+- Admin sign-in is at `/login`.
+- Authenticated booking list at `/bookings` supports status, service, and appointment-date filters.
+- Authenticated booking detail is at `/bookings/:bookingRef`; payment proof and prescription are fetched through authenticated file routes.
+- Payment verification and correction-request actions are available from booking detail.
+- Other admin modules described below remain outside this Phase 2A/2B implementation.
+
+---
+
 ## Admin Authentication
 
 - Login via email + password
@@ -35,18 +45,17 @@ Keep dashboard simple — no complex analytics in Phase 1.
 
 ### Bookings (`/bookings`)
 
-- List all bookings with pagination
-- Filter by: status, service, date range
-- Search by: booking reference, patient name, phone
+- List bookings
+- Filter by: status, service, appointment date
 - Click through to booking detail
-- Booking detail shows: all patient info, service details, slot, payment status, timeline
+- Booking detail shows: patient info, service details, slot, amount, payment status, and uploaded files
 
 ### Payment Verification (`/payments`)
 
 - List bookings with status `PAYMENT_VERIFICATION`
-- Show: booking ref, patient name, service, amount, submitted transaction ID
-- View payment proof (signed URL from backend)
-- Actions: Verify / Reject (with rejection reason)
+- Show: booking ref, patient name, service, amount, and payment proof
+- View payment proof through an authenticated backend file route
+- Actions: Verify / Request correction (with required reason)
 - After action: booking status updates accordingly
 
 ### Slots (`/slots`)

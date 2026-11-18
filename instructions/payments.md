@@ -1,140 +1,62 @@
 # Payments — Pune Caring Hands
 
-## Phase 1 Payment Method
+## Phase 2A Payment Flow
 
-**UPI QR Code + Manual Admin Verification**
-
-No payment gateway integration in Phase 1.
-Razorpay or similar is a future enhancement.
-
----
-
-## Payment Flow
+**UPI QR code + manual admin verification.** No payment gateway is used.
 
 ```
-Booking Created (status: REQUESTED)
+Booking created (PAYMENT_PENDING)
         ↓
-Payment Record Created (status: PENDING)
+Backend creates a PENDING payment using its calculated booking amount
         ↓
-Patient Sees UPI QR Code
+Patient pays using the UPI instructions / QR
         ↓
-Patient Pays via UPI App
+Patient submits a required payment screenshot (no transaction ID)
         ↓
-Patient Enters UPI Transaction ID
+Payment → SUBMITTED; booking → PAYMENT_VERIFICATION
         ↓
-Patient Uploads Payment Screenshot
-        ↓
-Payment status → SUBMITTED
-Booking status → PAYMENT_VERIFICATION
-        ↓
-Admin Reviews in Admin Panel
-        ↓
-    ┌───┴───┐
-VERIFIED    REJECTED
-    ↓           ↓
-Booking     Payment status → REJECTED
-CONFIRMED   Admin may request re-submission
+Authenticated admin reviews the proof
+       ↙ ↘
+Verify   Request correction with reason
+  ↓               ↓
+Booking        Payment → REJECTED
+CONFIRMED      Booking → PAYMENT_PENDING
+               (patient can resubmit proof)
 ```
 
----
+Uploading proof never confirms a booking. Only an authenticated admin can verify payment and move the booking to `CONFIRMED`.
+
+## Amount and UPI Configuration
+
+- `Payment.amount` is copied from backend-calculated `Booking.totalAmount`.
+- The public payment page reads the saved booking amount; it never submits a price.
+- Configure `UPI_ID` and `UPI_NAME` in environment variables.
+- The public instructions endpoint returns only the UPI ID and payee name.
+- The QR uses the UPI deep-link format with the saved amount and booking reference.
 
 ## Payment Statuses
 
-| Status      | Meaning                                                          |
-| ----------- | ---------------------------------------------------------------- |
-| `PENDING`   | Payment record created, patient has not yet submitted proof      |
-| `SUBMITTED` | Patient submitted transaction ID and proof screenshot            |
-| `VERIFIED`  | Admin confirmed payment is valid                                 |
-| `REJECTED`  | Admin rejected payment (incorrect amount, fake screenshot, etc.) |
+| Status | Meaning |
+| --- | --- |
+| `PENDING` | Payment record exists; proof has not been submitted |
+| `SUBMITTED` | Patient submitted a payment screenshot |
+| `VERIFIED` | Admin verified the payment |
+| `REJECTED` | Admin requested correction and recorded a reason |
 
----
+`Payment.upiTransactionId` remains in the database for compatibility but is not accepted or displayed in the patient flow.
 
-## Payment Record
+## Proof Upload and Access
 
-`Payment` model fields:
+- Accepted formats: JPEG, PNG, and PDF, validated by content signature.
+- Maximum size: 5MB, enforced by the multipart endpoint and upload service.
+- The patient submits the file as `proof` in `multipart/form-data`.
+- The database stores only the generated storage key.
+- Payment proofs and medicine prescriptions are returned only through authenticated admin booking file routes; raw keys and public file URLs are not exposed.
 
-- `bookingId` — linked booking (one-to-one)
-- `amount` — expected amount in INR (set by backend, never frontend)
-- `status` — current payment status
-- `upiTransactionId` — submitted by patient
-- `proofFileKey` — storage object key of uploaded screenshot
-- `submittedAt` — when patient submitted proof
-- `verifiedAt` — when admin verified
-- `rejectedAt` — when admin rejected
-- `rejectionReason` — admin's reason for rejection
+## Admin Actions
 
----
+- `PATCH /api/v1/admin/payments/:paymentId/verify` atomically marks payment `VERIFIED` and booking `CONFIRMED`.
+- `PATCH /api/v1/admin/payments/:paymentId/reject` requires a correction reason, marks payment `REJECTED`, and returns the booking to `PAYMENT_PENDING`.
+- Both operations verify the current state and update the booking and payment in one database transaction.
 
-## UPI Configuration
-
-- UPI ID stored in environment variable: `UPI_ID`
-- UPI display name: `UPI_NAME`
-- QR code generated dynamically using UPI deep link format:
-  ```
-  upi://pay?pa={UPI_ID}&pn={UPI_NAME}&am={amount}&cu=INR&tn={bookingRef}
-  ```
-- Never hardcode UPI ID in source code
-
----
-
-## File Upload Rules
-
-- Accepted formats: JPEG, PNG, PDF
-- Maximum file size: 5MB
-- File stored in secure object storage (not PostgreSQL)
-- `Payment.proofFileKey` stores the storage object key — NOT a public URL
-- Signed URLs generated on-demand for admin to view proof
-- See `instructions/file-storage.md` for storage rules
-
----
-
-## Backend Rules
-
-- `Payment.amount` is always set by the backend from `Booking.totalAmount`
-- Frontend never sends an amount — backend derives it from the booking
-- Payment status transitions are controlled by the backend only
-- Booking status is updated atomically with payment status in a transaction
-
-### Status Transition Rules
-
-```
-PENDING → SUBMITTED   (patient submits proof)
-SUBMITTED → VERIFIED  (admin verifies)
-SUBMITTED → REJECTED  (admin rejects)
-REJECTED → SUBMITTED  (patient resubmits — future enhancement)
-```
-
----
-
-## Admin Payment Verification
-
-Admin panel shows:
-
-- Booking reference
-- Patient name
-- Service name
-- Expected amount
-- Submitted UPI transaction ID
-- Payment proof image (via signed URL)
-- Verify / Reject action buttons
-- Rejection reason input (required when rejecting)
-
----
-
-## Security
-
-- Payment proof files are NOT publicly accessible
-- Admin accesses proof via time-limited signed URLs generated by the backend
-- Frontend never receives a direct storage URL
-- All payment status changes require admin JWT authentication
-
----
-
-## What NOT to Do
-
-- Do NOT automatically confirm a booking when a screenshot is uploaded
-- Do NOT trust the amount from the frontend
-- Do NOT store payment proof files in PostgreSQL
-- Do NOT expose direct storage URLs to the frontend
-- Do NOT allow payment status to be changed by the patient after submission
-- Do NOT implement Razorpay or any payment gateway in Phase 1
+No automatic payment gateway, automatic confirmation, or patient transaction-ID collection is implemented.

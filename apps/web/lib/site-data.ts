@@ -95,7 +95,7 @@ export const faqs = [
   {
     question: 'How do I pay?',
     answer:
-      'The booking flow includes UPI payment instructions. After payment, you submit your transaction ID and proof for verification.',
+      'The booking flow shows UPI instructions and a QR code. After payment, upload the required screenshot; our team verifies it before confirming the booking.',
   },
 ];
 

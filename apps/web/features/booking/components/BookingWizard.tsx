@@ -356,7 +356,7 @@ export default function BookingWizard() {
         payload,
         selectedService.slug === 'medicine-home-delivery' ? values.prescription : undefined,
       );
-      router.push(`/book/confirmation/${result.bookingRef}`);
+      router.push(`/book/payment/${result.bookingRef}`);
     } catch (error) {
       setApiError(error instanceof Error ? error.message : 'Booking creation failed.');
     } finally {

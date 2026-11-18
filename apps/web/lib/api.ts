@@ -39,9 +39,11 @@ export type BookingRecord = {
   service?: { name: string; slug: string };
   slot?: { date: string; startTime: string; endTime: string };
   bookingItems?: Array<{ id: string; name: string; price: number }>;
-  payment?: { id: string; amount: number; status: string };
+  payment?: { id: string; amount: number; status: string; rejectionReason?: string | null };
   createdAt: string;
 };
+
+export type PaymentInstructions = { upiId: string; payeeName: string };
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
@@ -114,4 +116,20 @@ export async function createBooking(
 
 export async function getBookingByRef(bookingRef: string): Promise<BookingRecord> {
   return apiFetch<BookingRecord>(`/bookings/${encodeURIComponent(bookingRef)}`);
+}
+
+export async function getPaymentInstructions(): Promise<PaymentInstructions> {
+  return apiFetch<PaymentInstructions>('/payments/instructions');
+}
+
+export async function submitPaymentProof(
+  bookingRef: string,
+  proof: File,
+): Promise<{ bookingRef: string; status: string }> {
+  const formData = new FormData();
+  formData.append('proof', proof);
+  return apiFetch(`/payments/${encodeURIComponent(bookingRef)}/proof`, {
+    method: 'POST',
+    body: formData,
+  });
 }

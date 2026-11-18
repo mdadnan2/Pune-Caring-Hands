@@ -5,6 +5,8 @@ import { ServicesModule } from './modules/services/services.module';
 import { ServiceAreasModule } from './modules/service-areas/service-areas.module';
 import { SlotsModule } from './modules/slots/slots.module';
 import { BookingsModule } from './modules/bookings/bookings.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -14,6 +16,8 @@ import { BookingsModule } from './modules/bookings/bookings.module';
     ServiceAreasModule,
     SlotsModule,
     BookingsModule,
+    AuthModule,
+    PaymentsModule,
   ],
 })
 export class AppModule {}

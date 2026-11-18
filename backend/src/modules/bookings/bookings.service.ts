@@ -12,8 +12,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ServiceAreasService } from '../service-areas/service-areas.service';
 import { AppointmentType, BookingStatus, PaymentStatus } from '@pch/shared';
 import { CreateBookingDto } from './dto/create-booking.dto';
-import { SubmitPaymentDto } from './dto/submit-payment.dto';
-import { UploadsService, type UploadedFile } from '../uploads/uploads.service';
+import { UploadsService, type UploadedFile, type StoredUpload } from '../uploads/uploads.service';
 import { isFutureSlot } from '../slots/slot-time.util';
 
 @Injectable()
@@ -198,7 +197,7 @@ export class BookingsService {
             serviceId: dto.serviceId,
             slotId: dto.slotId ?? null,
             appointmentType: dto.appointmentType,
-            status: BookingStatus.REQUESTED,
+            status: BookingStatus.PAYMENT_PENDING,
             totalAmount,
             notes: dto.notes ?? null,
             serviceDetails,
@@ -230,7 +229,7 @@ export class BookingsService {
             service: { select: { name: true, slug: true } },
             slot: { select: { date: true, startTime: true, endTime: true } },
             bookingItems: true,
-            payment: { select: { id: true, amount: true, status: true } },
+            payment: { select: { id: true, amount: true, status: true, rejectionReason: true } },
           },
         });
 
@@ -299,47 +298,115 @@ export class BookingsService {
     };
   }
 
-  async submitPaymentProof(bookingRef: string, dto: SubmitPaymentDto, proofFileKey?: string) {
+  async listAdmin(filters: { status?: BookingStatus; serviceId?: string; date?: string }) {
+    const date = filters.date ? new Date(`${filters.date}T00:00:00.000Z`) : undefined;
+    const nextDate = date ? new Date(date.getTime() + 24 * 60 * 60 * 1000) : undefined;
+    const bookings = await this.prisma.booking.findMany({
+      where: {
+        ...(filters.status && { status: filters.status }),
+        ...(filters.serviceId && { serviceId: filters.serviceId }),
+        ...(date &&
+          nextDate && {
+            slot: { date: { gte: date, lt: nextDate } },
+          }),
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        bookingRef: true,
+        status: true,
+        totalAmount: true,
+        createdAt: true,
+        patient: { select: { name: true, phone: true } },
+        service: { select: { name: true, slug: true } },
+        slot: { select: { date: true, startTime: true, endTime: true } },
+        payment: { select: { status: true } },
+      },
+      take: 100,
+    });
+    return bookings;
+  }
+
+  async getAdminByRef(bookingRef: string) {
     const booking = await this.prisma.booking.findUnique({
       where: { bookingRef },
-      include: { payment: true },
+      include: {
+        patient: {
+          select: { name: true, phone: true, email: true, address: true, dateOfBirth: true },
+        },
+        service: { select: { name: true, slug: true } },
+        slot: { select: { date: true, startTime: true, endTime: true } },
+        bookingItems: { select: { id: true, name: true, price: true } },
+        payment: {
+          select: {
+            id: true,
+            amount: true,
+            status: true,
+            proofFileKey: true,
+            submittedAt: true,
+            verifiedAt: true,
+            rejectedAt: true,
+            rejectionReason: true,
+          },
+        },
+      },
     });
-
     if (!booking) {
       throw new NotFoundException({ message: 'Booking not found', code: 'BOOKING_NOT_FOUND' });
     }
 
-    if (!booking.payment) {
-      throw new BadRequestException({
-        message: 'Payment record not found',
-        code: 'INTERNAL_ERROR',
-      });
+    const details =
+      booking.serviceDetails && typeof booking.serviceDetails === 'object'
+        ? (booking.serviceDetails as Record<string, unknown>)
+        : {};
+    const { prescriptionFileKey, ...publicDetails } = details;
+    return {
+      bookingRef: booking.bookingRef,
+      status: booking.status,
+      appointmentType: booking.appointmentType,
+      totalAmount: booking.totalAmount,
+      notes: booking.notes,
+      createdAt: booking.createdAt,
+      patient: booking.patient,
+      service: booking.service,
+      slot: booking.slot,
+      bookingItems: booking.bookingItems,
+      serviceDetails: publicDetails,
+      payment: booking.payment
+        ? {
+            ...booking.payment,
+            proofAvailable: Boolean(booking.payment.proofFileKey),
+            proofFileKey: undefined,
+          }
+        : null,
+      prescriptionAvailable: typeof prescriptionFileKey === 'string',
+    };
+  }
+
+  async getAdminFile(bookingRef: string, kind: 'proof' | 'prescription'): Promise<StoredUpload> {
+    const booking = await this.prisma.booking.findUnique({
+      where: { bookingRef },
+      select: {
+        payment: { select: { proofFileKey: true } },
+        serviceDetails: true,
+      },
+    });
+    if (!booking) {
+      throw new NotFoundException({ message: 'Booking not found', code: 'BOOKING_NOT_FOUND' });
     }
-
-    if (booking.payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException({
-        message: 'Payment has already been submitted',
-        code: 'PAYMENT_ALREADY_SUBMITTED',
-      });
+    const details =
+      booking.serviceDetails && typeof booking.serviceDetails === 'object'
+        ? (booking.serviceDetails as Record<string, unknown>)
+        : {};
+    const key =
+      kind === 'proof'
+        ? booking.payment?.proofFileKey
+        : typeof details.prescriptionFileKey === 'string'
+          ? details.prescriptionFileKey
+          : null;
+    if (!key) {
+      throw new NotFoundException({ message: 'File not found', code: 'FILE_NOT_FOUND' });
     }
-
-    await this.prisma.$transaction([
-      this.prisma.payment.update({
-        where: { id: booking.payment.id },
-        data: {
-          upiTransactionId: dto.upiTransactionId,
-          proofFileKey: proofFileKey ?? null,
-          status: PaymentStatus.SUBMITTED,
-          submittedAt: new Date(),
-        },
-      }),
-      this.prisma.booking.update({
-        where: { id: booking.id },
-        data: { status: BookingStatus.PAYMENT_VERIFICATION },
-      }),
-    ]);
-
-    return { bookingRef, status: BookingStatus.PAYMENT_VERIFICATION };
+    return this.uploadsService.readFile(key);
   }
 
   private async generateBookingRef(): Promise<string> {

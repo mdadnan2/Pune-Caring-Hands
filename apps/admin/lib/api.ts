@@ -1,25 +1,79 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api/v1';
 
+type ApiEnvelope<T> = { success: boolean; data: T; message?: string };
+
 export async function adminApiFetch<T>(
   path: string,
   init?: RequestInit & { token?: string },
 ): Promise<T> {
-  const { token, ...rest } = init ?? {};
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...rest.headers,
-    },
-    ...rest,
-  });
-
-  const json = await res.json();
-
-  if (!res.ok) {
-    throw new Error(json.message ?? 'Request failed');
+  const { token, ...requestInit } = init ?? {};
+  const headers = new Headers(requestInit.headers);
+  if (!(requestInit.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
   }
+  if (token) headers.set('Authorization', `Bearer ${token}`);
 
-  return json.data as T;
+  const response = await fetch(`${API_BASE}${path}`, { ...requestInit, headers });
+  const result = (await response.json()) as ApiEnvelope<T> & { message?: string | string[] };
+  if (!response.ok) {
+    throw new Error(
+      Array.isArray(result.message) ? result.message.join(', ') : result.message ?? 'Request failed',
+    );
+  }
+  return result.data;
 }
+
+export async function adminApiFile(path: string, token: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: 'no-store',
+  });
+  if (!response.ok) {
+    let message = 'Could not load the requested file.';
+    try {
+      const result = (await response.json()) as { message?: string | string[] };
+      message = Array.isArray(result.message) ? result.message.join(', ') : result.message ?? message;
+    } catch {
+      // The response may be a non-JSON server error.
+    }
+    throw new Error(message);
+  }
+  return response.blob();
+}
+
+export type AdminService = { id: string; name: string };
+export type AdminBookingListItem = {
+  bookingRef: string;
+  status: string;
+  totalAmount: number;
+  createdAt: string;
+  patient: { name: string; phone: string };
+  service: { name: string; slug: string };
+  slot: { date: string; startTime: string; endTime: string } | null;
+  payment: { status: string } | null;
+};
+
+export type AdminBookingDetail = AdminBookingListItem & {
+  appointmentType: string;
+  notes: string | null;
+  patient: {
+    name: string;
+    phone: string;
+    email: string | null;
+    address: string;
+    dateOfBirth: string | null;
+  };
+  bookingItems: Array<{ id: string; name: string; price: number }>;
+  serviceDetails: Record<string, unknown>;
+  payment: {
+    id: string;
+    amount: number;
+    status: string;
+    submittedAt: string | null;
+    verifiedAt: string | null;
+    rejectedAt: string | null;
+    rejectionReason: string | null;
+    proofAvailable: boolean;
+  } | null;
+  prescriptionAvailable: boolean;
+};
