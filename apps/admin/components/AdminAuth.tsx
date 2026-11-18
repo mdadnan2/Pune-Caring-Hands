@@ -25,7 +25,13 @@ export default function AdminAuth({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link className="font-bold text-slate-900" href="/bookings">Pune Caring Hands · Admin</Link>
+          <div className="flex flex-wrap items-center gap-6">
+            <Link className="font-bold text-slate-900" href="/bookings">Pune Caring Hands · Admin</Link>
+            <nav aria-label="Admin navigation" className="flex gap-4 text-sm font-medium">
+              <Link className="text-slate-600 hover:text-slate-900" href="/bookings">Bookings</Link>
+              <Link className="text-slate-600 hover:text-slate-900" href="/slots">Slots</Link>
+            </nav>
+          </div>
           <button
             type="button"
             className="text-sm font-semibold text-slate-600 hover:text-slate-900"

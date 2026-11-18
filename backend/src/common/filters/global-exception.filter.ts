@@ -26,15 +26,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             ? ((exception.getResponse() as { message?: string | string[] }).message ??
               exception.message)
             : 'Internal server error';
+    const exceptionResponse =
+      exception instanceof HttpException ? exception.getResponse() : undefined;
+    const code =
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null &&
+      'code' in exceptionResponse &&
+      typeof exceptionResponse.code === 'string'
+        ? exceptionResponse.code
+        : undefined;
 
     response.status(status).json({
       success: false,
       message: Array.isArray(message) ? message.join('; ') : message,
-      code: multerCode
-        ? 'VALIDATION_ERROR'
-        : status === HttpStatus.INTERNAL_SERVER_ERROR
-          ? 'INTERNAL_ERROR'
-          : 'REQUEST_ERROR',
+      code:
+        code ??
+        (multerCode
+          ? 'VALIDATION_ERROR'
+          : status === HttpStatus.INTERNAL_SERVER_ERROR
+            ? 'INTERNAL_ERROR'
+            : 'REQUEST_ERROR'),
     });
   }
 }

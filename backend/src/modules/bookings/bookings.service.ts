@@ -179,7 +179,7 @@ export class BookingsService {
           await tx.slot.update({ where: { id: dto.slotId }, data: { isAvailable: false } });
         }
 
-        const serviceDetails: Record<string, unknown> = { ...(dto.serviceDetails ?? {}) };
+        const serviceDetails = toPrismaJsonObject(dto.serviceDetails ?? {});
         if (dto.patientAlternatePhone) {
           serviceDetails.alternatePhone = dto.patientAlternatePhone;
         }
@@ -233,20 +233,20 @@ export class BookingsService {
           },
         });
 
-        return newBooking;
+        return {
+          bookingRef: newBooking.bookingRef,
+          status: newBooking.status,
+          appointmentType: newBooking.appointmentType,
+          totalAmount: newBooking.totalAmount,
+          service: newBooking.service,
+          slot: newBooking.slot,
+          bookingItems: newBooking.bookingItems,
+          payment: newBooking.payment,
+          createdAt: newBooking.createdAt,
+        };
       });
 
-      return {
-        bookingRef: booking.bookingRef,
-        status: booking.status,
-        appointmentType: booking.appointmentType,
-        totalAmount: booking.totalAmount,
-        service: booking.service,
-        slot: booking.slot,
-        bookingItems: booking.bookingItems,
-        payment: booking.payment,
-        createdAt: booking.createdAt,
-      };
+      return booking;
     } catch (error) {
       if (prescriptionFileKey) {
         try {
@@ -418,4 +418,31 @@ export class BookingsService {
     const seq = String(count + 1).padStart(4, '0');
     return `PCH-${dateStr}-${seq}`;
   }
+}
+
+function toPrismaJsonObject(
+  value: Record<string, unknown>,
+): Record<string, Prisma.InputJsonValue | null> {
+  const result: Record<string, Prisma.InputJsonValue | null> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const jsonValue = toPrismaJsonValue(entry);
+    if (jsonValue !== undefined) result[key] = jsonValue;
+  }
+  return result;
+}
+
+function toPrismaJsonValue(value: unknown): Prisma.InputJsonValue | null | undefined {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (Array.isArray(value)) {
+    const result: (Prisma.InputJsonValue | null)[] = [];
+    for (const entry of value) {
+      result.push(toPrismaJsonValue(entry) ?? null);
+    }
+    return result;
+  }
+  if (typeof value === 'object') {
+    return toPrismaJsonObject(value as Record<string, unknown>);
+  }
+  return undefined;
 }

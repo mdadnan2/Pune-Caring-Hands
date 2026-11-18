@@ -77,3 +77,83 @@ export type AdminBookingDetail = AdminBookingListItem & {
   } | null;
   prescriptionAvailable: boolean;
 };
+
+export type AdminSlotBooking = {
+  bookingRef: string;
+  status: string;
+  patient: { name: string };
+  service: { name: string };
+};
+
+export type AdminSlot = {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  booking: AdminSlotBooking | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminSlotsPage = {
+  items: AdminSlot[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type AdminSlotInput = {
+  date: string;
+  startTime: string;
+  endTime: string;
+  isAvailable?: boolean;
+};
+
+export async function getAdminSlots(
+  filters: {
+    date?: string;
+    availability?: 'available' | 'unavailable';
+    bookingStatus?: 'booked' | 'unbooked';
+    page: number;
+    pageSize: number;
+  },
+  token: string,
+): Promise<AdminSlotsPage> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== '') params.set(key, String(value));
+  }
+  return adminApiFetch<AdminSlotsPage>(`/admin/slots?${params.toString()}`, { token });
+}
+
+export async function createAdminSlot(
+  slot: Omit<AdminSlotInput, 'isAvailable'>,
+  token: string,
+): Promise<AdminSlot> {
+  return adminApiFetch<AdminSlot>('/admin/slots', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(slot),
+  });
+}
+
+export async function updateAdminSlot(
+  id: string,
+  changes: Partial<AdminSlotInput>,
+  token: string,
+): Promise<AdminSlot> {
+  return adminApiFetch<AdminSlot>(`/admin/slots/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(changes),
+  });
+}
+
+export async function deleteAdminSlot(id: string, token: string): Promise<void> {
+  await adminApiFetch<{ id: string; deleted: boolean }>(
+    `/admin/slots/${encodeURIComponent(id)}`,
+    { method: 'DELETE', token },
+  );
+}

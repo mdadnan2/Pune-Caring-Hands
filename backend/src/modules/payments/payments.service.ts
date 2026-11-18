@@ -57,7 +57,7 @@ export class PaymentsService {
     }
     if (
       booking.status !== BookingStatus.PAYMENT_PENDING ||
-      ![PaymentStatus.PENDING, PaymentStatus.REJECTED].includes(booking.payment.status)
+      (booking.payment.status !== 'PENDING' && booking.payment.status !== 'REJECTED')
     ) {
       throw new ConflictException({
         message: 'Payment proof cannot be submitted for this booking state.',
