@@ -78,6 +78,48 @@ export type AdminBookingDetail = AdminBookingListItem & {
   prescriptionAvailable: boolean;
 };
 
+export type AdminAvailableSlot = {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+};
+
+export async function getAvailableSlotsForAdmin(token: string): Promise<AdminAvailableSlot[]> {
+  return adminApiFetch<AdminAvailableSlot[]>('/slots/available', { token });
+}
+
+export async function cancelAdminBooking(
+  bookingRef: string,
+  token: string,
+): Promise<AdminBookingDetail> {
+  return adminApiFetch<AdminBookingDetail>(
+    `/admin/bookings/${encodeURIComponent(bookingRef)}/cancel`,
+    { method: 'POST', token },
+  );
+}
+
+export async function rescheduleAdminBooking(
+  bookingRef: string,
+  slotId: string,
+  token: string,
+): Promise<AdminBookingDetail> {
+  return adminApiFetch<AdminBookingDetail>(
+    `/admin/bookings/${encodeURIComponent(bookingRef)}/reschedule`,
+    { method: 'POST', token, body: JSON.stringify({ slotId }) },
+  );
+}
+
+export async function completeAdminBooking(
+  bookingRef: string,
+  token: string,
+): Promise<AdminBookingDetail> {
+  return adminApiFetch<AdminBookingDetail>(
+    `/admin/bookings/${encodeURIComponent(bookingRef)}/complete`,
+    { method: 'POST', token },
+  );
+}
+
 export type AdminSlotBooking = {
   bookingRef: string;
   status: string;

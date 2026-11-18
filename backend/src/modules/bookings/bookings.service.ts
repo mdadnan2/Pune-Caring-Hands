@@ -382,6 +382,142 @@ export class BookingsService {
     };
   }
 
+  async cancelAdmin(bookingRef: string, adminId: string) {
+    let releasedSlotId: string | null = null;
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const booking = await tx.booking.findUnique({
+        where: { bookingRef },
+        select: { id: true, status: true, slotId: true },
+      });
+      if (!booking) throw bookingNotFoundError();
+      if (booking.status !== BookingStatus.CONFIRMED) throw invalidBookingStatusError();
+
+      const cancelled = await tx.booking.updateMany({
+        where: {
+          id: booking.id,
+          status: BookingStatus.CONFIRMED,
+          slotId: booking.slotId,
+        },
+        data: { status: BookingStatus.CANCELLED, slotId: null },
+      });
+      if (cancelled.count !== 1) throw invalidBookingStatusError();
+
+      if (booking.slotId) {
+        const released = await tx.slot.updateMany({
+          where: { id: booking.slotId, booking: { is: null } },
+          data: { isAvailable: true },
+        });
+        if (released.count !== 1) throw slotNotFoundError();
+        releasedSlotId = booking.slotId;
+      }
+    });
+
+    this.logger.log(
+      `Booking status changed: ${bookingRef} CONFIRMED -> CANCELLED by admin ${adminId}${
+        releasedSlotId ? `; released slot ${releasedSlotId}` : ''
+      }`,
+    );
+    return this.getAdminByRef(bookingRef);
+  }
+
+  async rescheduleAdmin(bookingRef: string, newSlotId: string, adminId: string) {
+    let previousSlotId: string | null = null;
+    try {
+      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const booking = await tx.booking.findUnique({
+          where: { bookingRef },
+          select: { id: true, status: true, slotId: true },
+        });
+        if (!booking) throw bookingNotFoundError();
+        if (booking.status !== BookingStatus.CONFIRMED) throw invalidBookingStatusError();
+        previousSlotId = booking.slotId;
+        if (booking.slotId === newSlotId) {
+          throw slotUnavailableError('Choose a different slot from the current appointment.');
+        }
+
+        const newSlot = await tx.slot.findUnique({
+          where: { id: newSlotId },
+          select: {
+            id: true,
+            date: true,
+            startTime: true,
+            isAvailable: true,
+            booking: { select: { id: true } },
+          },
+        });
+        if (!newSlot) throw slotNotFoundError();
+        if (!isFutureSlot(newSlot.date, newSlot.startTime)) {
+          throw new BadRequestException({
+            message: 'The selected slot is in the past.',
+            code: 'SLOT_IN_PAST',
+          });
+        }
+        if (!newSlot.isAvailable || newSlot.booking) throw slotUnavailableError();
+
+        const reserved = await tx.slot.updateMany({
+          where: { id: newSlot.id, isAvailable: true, booking: { is: null } },
+          data: { isAvailable: false },
+        });
+        if (reserved.count !== 1) throw slotUnavailableError();
+
+        const reassigned = await tx.booking.updateMany({
+          where: {
+            id: booking.id,
+            status: BookingStatus.CONFIRMED,
+            slotId: booking.slotId,
+          },
+          data: { slotId: newSlot.id, status: BookingStatus.RESCHEDULED },
+        });
+        if (reassigned.count !== 1) throw invalidBookingStatusError();
+
+        if (booking.slotId) {
+          const released = await tx.slot.updateMany({
+            where: { id: booking.slotId, booking: { is: null } },
+            data: { isAvailable: true },
+          });
+          if (released.count !== 1) throw slotNotFoundError();
+        }
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw slotUnavailableError();
+      }
+      throw error;
+    }
+
+    this.logger.log(
+      `Booking status changed: ${bookingRef} CONFIRMED -> RESCHEDULED by admin ${adminId}; slot ${
+        previousSlotId ?? 'none'
+      } -> ${newSlotId}`,
+    );
+    return this.getAdminByRef(bookingRef);
+  }
+
+  async completeAdmin(bookingRef: string, adminId: string) {
+    await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const booking = await tx.booking.findUnique({
+        where: { bookingRef },
+        select: { id: true, status: true },
+      });
+      if (!booking) throw bookingNotFoundError();
+      if (booking.status !== BookingStatus.CONFIRMED) throw invalidBookingStatusError();
+
+      const completed = await tx.booking.updateMany({
+        where: { id: booking.id, status: BookingStatus.CONFIRMED },
+        data: { status: BookingStatus.COMPLETED },
+      });
+      if (completed.count !== 1) throw invalidBookingStatusError();
+    });
+
+    this.logger.log(
+      `Booking status changed: ${bookingRef} CONFIRMED -> COMPLETED by admin ${adminId}`,
+    );
+    return this.getAdminByRef(bookingRef);
+  }
+
   async getAdminFile(bookingRef: string, kind: 'proof' | 'prescription'): Promise<StoredUpload> {
     const booking = await this.prisma.booking.findUnique({
       where: { bookingRef },
@@ -445,4 +581,25 @@ function toPrismaJsonValue(value: unknown): Prisma.InputJsonValue | null | undef
     return toPrismaJsonObject(value as Record<string, unknown>);
   }
   return undefined;
+}
+
+function bookingNotFoundError(): NotFoundException {
+  return new NotFoundException({ message: 'Booking not found', code: 'BOOKING_NOT_FOUND' });
+}
+
+function invalidBookingStatusError(): ConflictException {
+  return new ConflictException({
+    message: "This operation is not allowed for the booking's current status.",
+    code: 'INVALID_BOOKING_STATUS',
+  });
+}
+
+function slotNotFoundError(): NotFoundException {
+  return new NotFoundException({ message: 'Slot not found.', code: 'SLOT_NOT_FOUND' });
+}
+
+function slotUnavailableError(
+  message = 'The selected time slot is no longer available.',
+): ConflictException {
+  return new ConflictException({ message, code: 'SLOT_UNAVAILABLE' });
 }

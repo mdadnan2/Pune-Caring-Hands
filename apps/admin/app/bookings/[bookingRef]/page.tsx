@@ -3,7 +3,16 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import AdminAuth from '../../../components/AdminAuth';
-import { adminApiFetch, adminApiFile, type AdminBookingDetail } from '../../../lib/api';
+import {
+  adminApiFetch,
+  adminApiFile,
+  cancelAdminBooking,
+  completeAdminBooking,
+  getAvailableSlotsForAdmin,
+  rescheduleAdminBooking,
+  type AdminAvailableSlot,
+  type AdminBookingDetail,
+} from '../../../lib/api';
 
 function BookingDetail({ bookingRef }: { bookingRef: string }) {
   const [token, setToken] = useState('');
@@ -15,6 +24,12 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
   const [isSaving, setIsSaving] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
   const [previewType, setPreviewType] = useState('');
+  const [operationalAction, setOperationalAction] = useState<
+    'reschedule' | null
+  >(null);
+  const [availableSlots, setAvailableSlots] = useState<AdminAvailableSlot[]>([]);
+  const [selectedSlotId, setSelectedSlotId] = useState('');
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem('pch_admin_token');
@@ -97,6 +112,85 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
       await load();
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : 'Could not request correction.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const cancelBooking = async () => {
+    if (!token || !booking) return;
+    const currentSlot = booking.slot
+      ? `${formatAppointmentDate(booking.slot.date)} · ${booking.slot.startTime}–${booking.slot.endTime}`
+      : 'Immediate request (no slot)';
+    if (
+      !window.confirm(
+        `Cancel this booking?\n\n${currentSlot}\n\nThis will release the assigned slot and mark the booking as cancelled.`,
+      )
+    ) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await cancelAdminBooking(bookingRef, token);
+      setNotice('Booking cancelled and its slot released.');
+      await load();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not cancel booking.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const completeBooking = async () => {
+    if (!token || !booking) return;
+    if (!window.confirm('Mark this booking as completed?')) return;
+
+    setIsSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await completeAdminBooking(bookingRef, token);
+      setNotice('Booking marked as completed.');
+      await load();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not complete booking.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openReschedule = async () => {
+    if (!token) return;
+    setOperationalAction('reschedule');
+    setSelectedSlotId('');
+    setAvailableSlots([]);
+    setIsLoadingSlots(true);
+    setError('');
+    try {
+      setAvailableSlots(await getAvailableSlotsForAdmin(token));
+    } catch (slotsError) {
+      setError(slotsError instanceof Error ? slotsError.message : 'Could not load available slots.');
+    } finally {
+      setIsLoadingSlots(false);
+    }
+  };
+
+  const confirmReschedule = async () => {
+    if (!token || !booking || !selectedSlotId) return;
+    setIsSaving(true);
+    setError('');
+    setNotice('');
+    try {
+      await rescheduleAdminBooking(bookingRef, selectedSlotId, token);
+      setOperationalAction(null);
+      setSelectedSlotId('');
+      setNotice('Booking rescheduled successfully.');
+      await load();
+    } catch (actionError) {
+      setError(actionError instanceof Error ? actionError.message : 'Could not reschedule booking.');
     } finally {
       setIsSaving(false);
     }
@@ -197,6 +291,101 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
           Previous correction reason: {booking.payment.rejectionReason}
         </p>
       ) : null}
+      {booking.status === 'CONFIRMED' ? (
+        <section className="mt-5 rounded-2xl border bg-white p-5">
+          <h2 className="text-lg font-semibold">Booking operations</h2>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => void completeBooking()}
+              className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              Complete Booking
+            </button>
+            <button
+              type="button"
+              disabled={isSaving || isLoadingSlots}
+              onClick={() => void openReschedule()}
+              className="rounded-full border px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
+            >
+              Reschedule
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => void cancelBooking()}
+              className="rounded-full border border-red-300 px-5 py-2.5 text-sm font-semibold text-red-700 disabled:opacity-50"
+            >
+              Cancel Booking
+            </button>
+          </div>
+          {operationalAction === 'reschedule' ? (
+            <div className="mt-5 border-t pt-5">
+              <h3 className="font-medium">Choose a new available slot</h3>
+              {isLoadingSlots ? (
+                <p className="mt-3 text-sm text-slate-600">Loading available slots...</p>
+              ) : availableSlots.length ? (
+                <label className="mt-3 block max-w-xl text-sm font-medium text-slate-700">
+                  Future appointment slots
+                  <select
+                    value={selectedSlotId}
+                    onChange={(event) => setSelectedSlotId(event.target.value)}
+                    className="mt-1 w-full rounded-lg border p-2.5"
+                  >
+                    <option value="">Select a slot</option>
+                    {availableSlots.map((slot) => (
+                      <option key={slot.id} value={slot.id}>
+                        {formatAppointmentDate(slot.date)} · {slot.startTime}–{slot.endTime}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : (
+                <p className="mt-3 text-sm text-slate-600">No future available slots.</p>
+              )}
+              {selectedSlotId
+                ? (() => {
+                    const selectedSlot = availableSlots.find((slot) => slot.id === selectedSlotId);
+                    if (!selectedSlot) return null;
+                    return (
+                      <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm">
+                        <p>
+                          <strong>Current:</strong>{' '}
+                          {booking.slot
+                            ? `${formatAppointmentDate(booking.slot.date)} · ${booking.slot.startTime}–${booking.slot.endTime}`
+                            : 'Immediate request (no slot)'}
+                        </p>
+                        <p className="mt-2">
+                          <strong>New:</strong> {formatAppointmentDate(selectedSlot.date)} ·{' '}
+                          {selectedSlot.startTime}–{selectedSlot.endTime}
+                        </p>
+                        <div className="mt-4 flex gap-3">
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => void confirmReschedule()}
+                            className="rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                          >
+                            {isSaving ? 'Rescheduling...' : 'Confirm Reschedule'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isSaving}
+                            onClick={() => setOperationalAction(null)}
+                            className="rounded-full border px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                          >
+                            Keep Current Slot
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()
+                : null}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
       {awaitingVerification ? (
         <section className="mt-5 rounded-2xl border bg-white p-5">
           <h2 className="text-lg font-semibold">Payment review</h2>
@@ -213,6 +402,15 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
       ) : null}
     </main>
   );
+}
+
+function formatAppointmentDate(date: string): string {
+  return new Date(date).toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

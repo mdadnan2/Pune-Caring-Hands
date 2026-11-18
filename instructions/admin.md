@@ -9,13 +9,16 @@ All authenticated admins have access to all admin functionality.
 
 ---
 
-## Implemented Phase 2A/2B Booking Slice
+## Implemented Booking Management
 
 - Admin sign-in is at `/login`.
 - Authenticated booking list at `/bookings` supports status, service, and appointment-date filters.
 - Authenticated booking detail is at `/bookings/:bookingRef`; payment proof and prescription are fetched through authenticated file routes.
 - Payment verification and correction-request actions are available from booking detail.
-- Other admin modules described below remain outside this Phase 2A/2B implementation.
+- Confirmed bookings can be completed, cancelled, or rescheduled from booking detail. Cancellation releases and detaches its slot; rescheduling atomically reserves a future global slot and releases the previous one.
+- Booking operation routes are `POST /api/v1/admin/bookings/:bookingRef/cancel`, `POST /api/v1/admin/bookings/:bookingRef/reschedule`, and `POST /api/v1/admin/bookings/:bookingRef/complete`. All require admin JWT authentication.
+- Operational transitions are limited to `CONFIRMED → CANCELLED`, `CONFIRMED → RESCHEDULED`, and `CONFIRMED → COMPLETED`. Status changes are logged server-side; payment records are unchanged by these actions.
+- Other admin modules described below remain outside the currently implemented booking/slot-management slice.
 
 ---
 
