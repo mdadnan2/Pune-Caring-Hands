@@ -102,6 +102,9 @@ export class PaymentsService {
         await this.deletePreviousProof(previousProofKey);
       }
 
+      this.logger.log(
+        `Booking status changed: ${bookingRef} PAYMENT_PENDING -> PAYMENT_VERIFICATION`,
+      );
       return { bookingRef, status: BookingStatus.PAYMENT_VERIFICATION };
     } catch (error) {
       await this.deleteUploadedFile(proofFileKey);
@@ -156,6 +159,9 @@ export class PaymentsService {
       }
     });
 
+    this.logger.log(
+      `Booking status changed: ${payment.booking.bookingRef} PAYMENT_VERIFICATION -> CONFIRMED by admin ${adminId}`,
+    );
     return { paymentId, bookingRef: payment.booking.bookingRef, status: BookingStatus.CONFIRMED };
   }
 
@@ -206,6 +212,9 @@ export class PaymentsService {
       }
     });
 
+    this.logger.log(
+      `Booking status changed: ${payment.booking.bookingRef} PAYMENT_VERIFICATION -> PAYMENT_PENDING by admin ${adminId}`,
+    );
     return {
       paymentId,
       bookingRef: payment.booking.bookingRef,

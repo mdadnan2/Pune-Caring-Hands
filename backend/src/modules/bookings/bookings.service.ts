@@ -12,6 +12,7 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { ServiceAreasService } from '../service-areas/service-areas.service';
 import { AppointmentType, BookingStatus, PaymentStatus } from '@pch/shared';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { AdminBookingQueryDto } from './dto/admin-booking-query.dto';
 import { UploadsService, type UploadedFile, type StoredUpload } from '../uploads/uploads.service';
 import { isFutureSlot } from '../slots/slot-time.util';
 
@@ -168,15 +169,16 @@ export class BookingsService {
             });
           }
 
-          const existingBooking = await tx.booking.findUnique({ where: { slotId: dto.slotId } });
-          if (existingBooking) {
+          const reserved = await tx.slot.updateMany({
+            where: { id: dto.slotId, isAvailable: true, booking: { is: null } },
+            data: { isAvailable: false },
+          });
+          if (reserved.count !== 1) {
             throw new ConflictException({
               message: 'The selected time slot is no longer available. Please choose another slot.',
               code: 'SLOT_UNAVAILABLE',
             });
           }
-
-          await tx.slot.update({ where: { id: dto.slotId }, data: { isAvailable: false } });
         }
 
         const serviceDetails = toPrismaJsonObject(dto.serviceDetails ?? {});
@@ -259,6 +261,11 @@ export class BookingsService {
           );
         }
       }
+      if (isSlotBookingUniqueConstraintError(error)) {
+        throw slotUnavailableError(
+          'The selected time slot is no longer available. Please choose another slot.',
+        );
+      }
       if (prescriptionFileKey && !(error instanceof HttpException)) {
         throw new InternalServerErrorException({
           message:
@@ -298,32 +305,58 @@ export class BookingsService {
     };
   }
 
-  async listAdmin(filters: { status?: BookingStatus; serviceId?: string; date?: string }) {
+  async listAdmin(filters: AdminBookingQueryDto) {
     const date = filters.date ? new Date(`${filters.date}T00:00:00.000Z`) : undefined;
     const nextDate = date ? new Date(date.getTime() + 24 * 60 * 60 * 1000) : undefined;
-    const bookings = await this.prisma.booking.findMany({
-      where: {
-        ...(filters.status && { status: filters.status }),
-        ...(filters.serviceId && { serviceId: filters.serviceId }),
-        ...(date &&
-          nextDate && {
-            slot: { date: { gte: date, lt: nextDate } },
-          }),
-      },
-      orderBy: { createdAt: 'desc' },
-      select: {
-        bookingRef: true,
-        status: true,
-        totalAmount: true,
-        createdAt: true,
-        patient: { select: { name: true, phone: true } },
-        service: { select: { name: true, slug: true } },
-        slot: { select: { date: true, startTime: true, endTime: true } },
-        payment: { select: { status: true } },
-      },
-      take: 100,
+    const search = filters.search?.trim();
+    const where: Prisma.BookingWhereInput = {
+      ...(filters.status && { status: filters.status }),
+      ...(filters.appointmentType && { appointmentType: filters.appointmentType }),
+      ...(filters.serviceId && { serviceId: filters.serviceId }),
+      ...(date &&
+        nextDate && {
+          slot: { date: { gte: date, lt: nextDate } },
+        }),
+      ...(search && {
+        OR: [
+          { bookingRef: { contains: search, mode: 'insensitive' } },
+          { patient: { name: { contains: search, mode: 'insensitive' } } },
+          { patient: { phone: { contains: search } } },
+        ],
+      }),
+    };
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 20;
+
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const [items, total] = await Promise.all([
+        tx.booking.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          select: {
+            bookingRef: true,
+            status: true,
+            totalAmount: true,
+            createdAt: true,
+            patient: { select: { name: true, phone: true } },
+            service: { select: { name: true, slug: true } },
+            slot: { select: { date: true, startTime: true, endTime: true } },
+            payment: { select: { status: true } },
+          },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        tx.booking.count({ where }),
+      ]);
+
+      return {
+        items,
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      };
     });
-    return bookings;
   }
 
   async getAdminByRef(bookingRef: string) {
@@ -466,7 +499,11 @@ export class BookingsService {
             status: BookingStatus.CONFIRMED,
             slotId: booking.slotId,
           },
-          data: { slotId: newSlot.id, status: BookingStatus.RESCHEDULED },
+          data: {
+            slotId: newSlot.id,
+            appointmentType: AppointmentType.SCHEDULED,
+            status: BookingStatus.RESCHEDULED,
+          },
         });
         if (reassigned.count !== 1) throw invalidBookingStatusError();
 
@@ -479,10 +516,7 @@ export class BookingsService {
         }
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002'
-      ) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw slotUnavailableError();
       }
       throw error;
@@ -602,4 +636,15 @@ function slotUnavailableError(
   message = 'The selected time slot is no longer available.',
 ): ConflictException {
   return new ConflictException({ message, code: 'SLOT_UNAVAILABLE' });
+}
+
+function isSlotBookingUniqueConstraintError(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false;
+  }
+
+  const target = error.meta?.target;
+  return Array.isArray(target)
+    ? target.some((field) => typeof field === 'string' && field.toLowerCase() === 'slotid')
+    : typeof target === 'string' && target.toLowerCase().includes('slotid');
 }

@@ -12,12 +12,12 @@ All authenticated admins have access to all admin functionality.
 ## Implemented Booking Management
 
 - Admin sign-in is at `/login`.
-- Authenticated booking list at `/bookings` supports status, service, and appointment-date filters.
+- Authenticated booking list at `/bookings` supports search by booking reference, patient name, or mobile number; status, appointment type, service, and appointment-date filters; and pagination.
 - Authenticated booking detail is at `/bookings/:bookingRef`; payment proof and prescription are fetched through authenticated file routes.
 - Payment verification and correction-request actions are available from booking detail.
 - Confirmed bookings can be completed, cancelled, or rescheduled from booking detail. Cancellation releases and detaches its slot; rescheduling atomically reserves a future global slot and releases the previous one.
 - Booking operation routes are `POST /api/v1/admin/bookings/:bookingRef/cancel`, `POST /api/v1/admin/bookings/:bookingRef/reschedule`, and `POST /api/v1/admin/bookings/:bookingRef/complete`. All require admin JWT authentication.
-- Operational transitions are limited to `CONFIRMED → CANCELLED`, `CONFIRMED → RESCHEDULED`, and `CONFIRMED → COMPLETED`. Status changes are logged server-side; payment records are unchanged by these actions.
+- Operational transitions are limited to `CONFIRMED → CANCELLED`, `CONFIRMED → RESCHEDULED`, and `CONFIRMED → COMPLETED`. Payment verification and correction transitions are also logged server-side. Payment records are unchanged by completion, cancellation, and rescheduling.
 - Other admin modules described below remain outside the currently implemented booking/slot-management slice.
 
 ---
@@ -116,48 +116,27 @@ Keep dashboard simple — no complex analytics in Phase 1.
 
 ---
 
-## Admin API Endpoints (to be implemented)
+## Implemented Booking and Slot API Endpoints
 
-All under `/api/v1/admin/`:
+All admin endpoints require the existing JWT guard and are under `/api/v1/admin/`:
 
 ```
 POST   /auth/login
-GET    /dashboard/stats
-GET    /bookings
-GET    /bookings/:id
-PATCH  /bookings/:id/status
-GET    /payments/pending
-PATCH  /payments/:id/verify
-PATCH  /payments/:id/reject
+GET    /bookings?page=1&pageSize=20&search=...
+GET    /bookings/:bookingRef
+POST   /bookings/:bookingRef/cancel
+POST   /bookings/:bookingRef/reschedule       { "slotId": "..." }
+POST   /bookings/:bookingRef/complete
+GET    /bookings/:bookingRef/files/:kind
+PATCH  /payments/:paymentId/verify
+PATCH  /payments/:paymentId/reject
 GET    /slots
 POST   /slots
 PATCH  /slots/:id
 DELETE /slots/:id
-GET    /services
-PATCH  /services/:id
-GET    /services/:id/items
-POST   /services/:id/items
-PATCH  /service-items/:id
-DELETE /service-items/:id
-GET    /patients
-GET    /patients/:id
-GET    /service-areas
-POST   /service-areas
-PATCH  /service-areas/:id
-DELETE /service-areas/:id
-GET    /faqs
-POST   /faqs
-PATCH  /faqs/:id
-DELETE /faqs/:id
-GET    /testimonials
-POST   /testimonials
-PATCH  /testimonials/:id
-DELETE /testimonials/:id
-GET    /content
-PATCH  /content/:key
-GET    /settings
-PATCH  /settings
 ```
+
+There is no generic booking status-update endpoint. Other admin modules listed above are planned and outside the implemented booking/slot-management slice.
 
 ---
 

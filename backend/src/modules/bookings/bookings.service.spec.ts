@@ -5,14 +5,16 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 import { UploadsService } from '../uploads/uploads.service';
 import { InternalServerErrorException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { AdminBookingQueryDto } from './dto/admin-booking-query.dto';
 
 type MockPrismaBooking = {
   service: { findFirst: jest.Mock };
   patient: { upsert: jest.Mock };
-  slot: { findUnique: jest.Mock; update: jest.Mock; updateMany: jest.Mock };
+  slot: { findUnique: jest.Mock; updateMany: jest.Mock };
   booking: {
     count: jest.Mock;
     findUnique: jest.Mock;
+    findMany: jest.Mock;
     create: jest.Mock;
     updateMany: jest.Mock;
   };
@@ -35,17 +37,18 @@ describe('BookingsService', () => {
       },
       slot: {
         findUnique: jest.fn(),
-        update: jest.fn(),
         updateMany: jest.fn(),
       },
       booking: {
         count: jest.fn(),
         findUnique: jest.fn(),
+        findMany: jest.fn(),
         create: jest.fn(),
         updateMany: jest.fn(),
       },
       $transaction: jest.fn(async (callback) => callback(prisma)),
     };
+    prisma.slot.updateMany.mockResolvedValue({ count: 1 });
 
     serviceAreasService = {
       validatePinForService: jest.fn().mockResolvedValue(true),
@@ -105,6 +108,16 @@ describe('BookingsService', () => {
       bookingRef: expect.any(String),
       status: BookingStatus.PAYMENT_PENDING,
     });
+    expect(prisma.booking.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: BookingStatus.PAYMENT_PENDING,
+          payment: {
+            create: { amount: 1500, status: PaymentStatus.PENDING },
+          },
+        }),
+      }),
+    );
   });
 
   it('rejects scheduled bookings without a slot', async () => {
@@ -229,7 +242,6 @@ describe('BookingsService', () => {
       startTime: '09:00',
     });
     prisma.booking.findUnique.mockResolvedValue(null);
-    prisma.slot.update.mockResolvedValue({});
     prisma.booking.create.mockResolvedValue({
       bookingRef: 'PCH-20261118-0001',
       status: BookingStatus.PAYMENT_PENDING,
@@ -286,6 +298,10 @@ describe('BookingsService', () => {
         }),
       }),
     );
+    expect(prisma.slot.updateMany).toHaveBeenCalledWith({
+      where: { id: 'slot-1', isAvailable: true, booking: { is: null } },
+      data: { isAvailable: false },
+    });
   });
 
   it('does not create a booking when prescription storage fails', async () => {
@@ -402,6 +418,199 @@ describe('BookingsService', () => {
     expect(prisma.booking.create).not.toHaveBeenCalled();
   });
 
+  it('rejects a booking if conditional slot reservation loses a race', async () => {
+    prisma.service.findFirst.mockResolvedValue({
+      id: 'svc-doctor',
+      slug: 'doctor-home-consultation',
+      basePrice: 1500,
+      isActive: true,
+      serviceItems: [],
+    });
+    prisma.booking.count.mockResolvedValue(0);
+    prisma.patient.upsert.mockResolvedValue({ id: 'patient-1' });
+    prisma.slot.findUnique.mockResolvedValue({
+      id: 'slot-1',
+      isAvailable: true,
+      date: new Date('2999-11-19T00:00:00.000Z'),
+      startTime: '09:00',
+    });
+    prisma.slot.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      bookingsService.create({
+        serviceId: 'svc-doctor',
+        appointmentType: AppointmentType.SCHEDULED,
+        patientName: 'Asha Patil',
+        patientPhone: '9876543210',
+        patientAddress: 'Flat 1, Pune Maharashtra',
+        patientPinCode: '411045',
+        serviceDetails: { chiefComplaint: 'Fever and weakness' },
+        slotId: 'slot-1',
+      }),
+    ).rejects.toMatchObject({ response: { code: 'SLOT_UNAVAILABLE' } });
+
+    expect(prisma.booking.create).not.toHaveBeenCalled();
+  });
+
+  it('allows only one concurrent booking to reserve a shared slot', async () => {
+    prisma.service.findFirst.mockResolvedValue({
+      id: 'svc-doctor',
+      slug: 'doctor-home-consultation',
+      basePrice: 1500,
+      isActive: true,
+      serviceItems: [],
+    });
+    let refCount = 0;
+    prisma.booking.count.mockImplementation(async () => refCount++);
+    prisma.patient.upsert.mockImplementation(async ({ where }) => ({ id: where.phone }));
+    prisma.slot.findUnique.mockResolvedValue({
+      id: 'slot-1',
+      isAvailable: true,
+      date: new Date('2999-11-19T00:00:00.000Z'),
+      startTime: '09:00',
+    });
+    let slotAvailable = true;
+    prisma.slot.updateMany.mockImplementation(async () => {
+      if (!slotAvailable) return { count: 0 };
+      slotAvailable = false;
+      return { count: 1 };
+    });
+    prisma.booking.create.mockResolvedValue({
+      bookingRef: 'PCH-REF',
+      status: BookingStatus.PAYMENT_PENDING,
+      appointmentType: AppointmentType.SCHEDULED,
+      totalAmount: 1500,
+      service: { name: 'Doctor Home Consultation', slug: 'doctor-home-consultation' },
+      slot: { date: new Date('2999-11-19T00:00:00.000Z'), startTime: '09:00', endTime: '10:00' },
+      bookingItems: [],
+      payment: { id: 'pay-1', amount: 1500, status: PaymentStatus.PENDING },
+      createdAt: new Date(),
+    });
+    prisma.booking.create.mockResolvedValue({
+      bookingRef: 'PCH-REF',
+      status: BookingStatus.PAYMENT_PENDING,
+      appointmentType: AppointmentType.SCHEDULED,
+      totalAmount: 1500,
+      service: { name: 'Doctor Home Consultation', slug: 'doctor-home-consultation' },
+      slot: { date: new Date('2999-11-19T00:00:00.000Z'), startTime: '09:00', endTime: '10:00' },
+      bookingItems: [],
+      payment: { id: 'pay-1', amount: 1500, status: PaymentStatus.PENDING },
+      createdAt: new Date(),
+    });
+
+    const requests = await Promise.allSettled([
+      bookingsService.create({
+        serviceId: 'svc-doctor',
+        appointmentType: AppointmentType.SCHEDULED,
+        patientName: 'Asha Patil',
+        patientPhone: '9876543210',
+        patientAddress: 'Flat 1, Pune Maharashtra',
+        patientPinCode: '411045',
+        serviceDetails: { chiefComplaint: 'Fever and weakness' },
+        slotId: 'slot-1',
+      }),
+      bookingsService.create({
+        serviceId: 'svc-doctor',
+        appointmentType: AppointmentType.SCHEDULED,
+        patientName: 'Riya Patil',
+        patientPhone: '9876543211',
+        patientAddress: 'Flat 2, Pune Maharashtra',
+        patientPinCode: '411045',
+        serviceDetails: { chiefComplaint: 'Cough' },
+        slotId: 'slot-1',
+      }),
+    ]);
+
+    expect(requests.filter((request) => request.status === 'fulfilled')).toHaveLength(1);
+    const rejected = requests.find((request) => request.status === 'rejected');
+    expect(rejected).toMatchObject({
+      status: 'rejected',
+      reason: { response: { code: 'SLOT_UNAVAILABLE' } },
+    });
+  });
+
+  it('maps a slot unique-constraint race during booking creation to SLOT_UNAVAILABLE', async () => {
+    prisma.service.findFirst.mockResolvedValue({
+      id: 'svc-doctor',
+      slug: 'doctor-home-consultation',
+      basePrice: 1500,
+      isActive: true,
+      serviceItems: [],
+    });
+    prisma.booking.count.mockResolvedValue(0);
+    prisma.patient.upsert.mockResolvedValue({ id: 'patient-1' });
+    prisma.slot.findUnique.mockResolvedValue({
+      id: 'slot-1',
+      isAvailable: true,
+      date: new Date('2999-11-19T00:00:00.000Z'),
+      startTime: '09:00',
+    });
+    prisma.booking.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.19.1',
+        meta: { target: ['slotId'] },
+      }),
+    );
+
+    await expect(
+      bookingsService.create({
+        serviceId: 'svc-doctor',
+        appointmentType: AppointmentType.SCHEDULED,
+        patientName: 'Asha Patil',
+        patientPhone: '9876543210',
+        patientAddress: 'Flat 1, Pune Maharashtra',
+        patientPinCode: '411045',
+        serviceDetails: { chiefComplaint: 'Fever and weakness' },
+        slotId: 'slot-1',
+      }),
+    ).rejects.toMatchObject({ response: { code: 'SLOT_UNAVAILABLE' } });
+  });
+
+  it('returns paginated bookings with status, appointment, service, date, and search filters', async () => {
+    prisma.booking.findMany.mockResolvedValue([]);
+    prisma.booking.count.mockResolvedValue(43);
+    const filters = Object.assign(new AdminBookingQueryDto(), {
+      status: BookingStatus.CONFIRMED,
+      appointmentType: AppointmentType.SCHEDULED,
+      serviceId: 'service-id',
+      date: '2026-11-20',
+      search: 'asha',
+      page: 3,
+      pageSize: 10,
+    });
+
+    await expect(bookingsService.listAdmin(filters)).resolves.toEqual({
+      items: [],
+      total: 43,
+      page: 3,
+      pageSize: 10,
+      totalPages: 5,
+    });
+    expect(prisma.booking.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: BookingStatus.CONFIRMED,
+          appointmentType: AppointmentType.SCHEDULED,
+          serviceId: 'service-id',
+          slot: {
+            date: {
+              gte: new Date('2026-11-20T00:00:00.000Z'),
+              lt: new Date('2026-11-21T00:00:00.000Z'),
+            },
+          },
+          OR: [
+            { bookingRef: { contains: 'asha', mode: 'insensitive' } },
+            { patient: { name: { contains: 'asha', mode: 'insensitive' } } },
+            { patient: { phone: { contains: 'asha' } } },
+          ],
+        }),
+        skip: 20,
+        take: 10,
+      }),
+    );
+  });
+
   it('cancels a confirmed scheduled booking and releases its slot atomically', async () => {
     prisma.booking.findUnique
       .mockResolvedValueOnce({
@@ -432,6 +641,40 @@ describe('BookingsService', () => {
       data: { isAvailable: true },
     });
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it('rolls back cancellation if releasing the old slot fails', async () => {
+    const bookingState = {
+      id: 'booking-1',
+      status: BookingStatus.CONFIRMED,
+      slotId: 'old-slot' as string | null,
+      appointmentType: AppointmentType.SCHEDULED,
+    };
+    prisma.booking.findUnique.mockImplementation(async () => ({ ...bookingState }));
+    prisma.booking.updateMany.mockImplementation(async ({ data }) => {
+      Object.assign(bookingState, data);
+      return { count: 1 };
+    });
+    prisma.slot.updateMany.mockResolvedValue({ count: 0 });
+    prisma.$transaction.mockImplementation(async (callback) => {
+      const snapshot = { ...bookingState };
+      try {
+        return await callback(prisma);
+      } catch (error) {
+        Object.assign(bookingState, snapshot);
+        throw error;
+      }
+    });
+
+    await expect(bookingsService.cancelAdmin('PCH-REF', 'admin-1')).rejects.toMatchObject({
+      response: { code: 'SLOT_NOT_FOUND' },
+    });
+    expect(bookingState).toEqual({
+      id: 'booking-1',
+      status: BookingStatus.CONFIRMED,
+      slotId: 'old-slot',
+      appointmentType: AppointmentType.SCHEDULED,
+    });
   });
 
   it('cancels a confirmed immediate booking without changing slots', async () => {
@@ -471,6 +714,26 @@ describe('BookingsService', () => {
     });
     expect(prisma.booking.updateMany).not.toHaveBeenCalled();
     expect(prisma.slot.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('keeps RESCHEDULED terminal for completion, cancellation, and another reschedule', async () => {
+    prisma.booking.findUnique.mockResolvedValue({
+      id: 'booking-1',
+      status: BookingStatus.RESCHEDULED,
+      slotId: 'slot-1',
+    });
+
+    await expect(bookingsService.cancelAdmin('PCH-REF', 'admin-1')).rejects.toMatchObject({
+      response: { code: 'INVALID_BOOKING_STATUS' },
+    });
+    await expect(bookingsService.completeAdmin('PCH-REF', 'admin-1')).rejects.toMatchObject({
+      response: { code: 'INVALID_BOOKING_STATUS' },
+    });
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'another-slot', 'admin-1'),
+    ).rejects.toMatchObject({ response: { code: 'INVALID_BOOKING_STATUS' } });
+    expect(prisma.booking.updateMany).not.toHaveBeenCalled();
+    expect(prisma.slot.findUnique).not.toHaveBeenCalled();
   });
 
   it('rejects operational actions when the booking does not exist', async () => {
@@ -528,7 +791,9 @@ describe('BookingsService', () => {
     prisma.slot.updateMany.mockResolvedValue({ count: 1 });
     prisma.booking.updateMany.mockResolvedValue({ count: 1 });
 
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1')).resolves.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+    ).resolves.toMatchObject({
       status: BookingStatus.RESCHEDULED,
       slot: { startTime: '11:00' },
     });
@@ -543,7 +808,11 @@ describe('BookingsService', () => {
         status: BookingStatus.CONFIRMED,
         slotId: 'old-slot',
       },
-      data: { slotId: 'new-slot', status: BookingStatus.RESCHEDULED },
+      data: {
+        slotId: 'new-slot',
+        appointmentType: AppointmentType.SCHEDULED,
+        status: BookingStatus.RESCHEDULED,
+      },
     });
     expect(prisma.slot.updateMany).toHaveBeenNthCalledWith(2, {
       where: { id: 'old-slot', booking: { is: null } },
@@ -552,19 +821,56 @@ describe('BookingsService', () => {
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects rescheduling when the booking is missing or not confirmed', async () => {
+  it('converts an immediate booking to scheduled when rescheduling into a slot', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-11-18T08:15:00.000Z'));
     prisma.booking.findUnique
-      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
         id: 'booking-1',
-        status: BookingStatus.PAYMENT_VERIFICATION,
-        slotId: 'old-slot',
-      });
+        status: BookingStatus.CONFIRMED,
+        slotId: null,
+      })
+      .mockResolvedValueOnce(adminBookingRecord(BookingStatus.RESCHEDULED, 'new-slot'));
+    prisma.slot.findUnique.mockResolvedValue({
+      id: 'new-slot',
+      date: new Date('2026-11-20T00:00:00.000Z'),
+      startTime: '11:00',
+      isAvailable: true,
+      booking: null,
+    });
+    prisma.booking.updateMany.mockResolvedValue({ count: 1 });
 
-    await expect(bookingsService.rescheduleAdmin('missing', 'new-slot', 'admin-1')).rejects.toMatchObject({
+    await bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1');
+
+    expect(prisma.booking.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: 'booking-1',
+        status: BookingStatus.CONFIRMED,
+        slotId: null,
+      },
+      data: {
+        slotId: 'new-slot',
+        appointmentType: AppointmentType.SCHEDULED,
+        status: BookingStatus.RESCHEDULED,
+      },
+    });
+    expect(prisma.slot.updateMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects rescheduling when the booking is missing or not confirmed', async () => {
+    prisma.booking.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'booking-1',
+      status: BookingStatus.PAYMENT_VERIFICATION,
+      slotId: 'old-slot',
+    });
+
+    await expect(
+      bookingsService.rescheduleAdmin('missing', 'new-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'BOOKING_NOT_FOUND' },
     });
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'INVALID_BOOKING_STATUS' },
     });
     expect(prisma.slot.findUnique).not.toHaveBeenCalled();
@@ -607,19 +913,29 @@ describe('BookingsService', () => {
         booking: null,
       });
 
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'missing-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'missing-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_NOT_FOUND' },
     });
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'old-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'old-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_UNAVAILABLE' },
     });
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'occupied-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'occupied-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_UNAVAILABLE' },
     });
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'disabled-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'disabled-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_UNAVAILABLE' },
     });
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'past-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'past-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_IN_PAST' },
     });
     expect(prisma.slot.updateMany).not.toHaveBeenCalled();
@@ -642,10 +958,66 @@ describe('BookingsService', () => {
     });
     prisma.slot.updateMany.mockResolvedValue({ count: 0 });
 
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_UNAVAILABLE' },
     });
     expect(prisma.booking.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('allows only one concurrent reschedule to reserve the same slot', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-11-18T08:15:00.000Z'));
+    const bookingState = {
+      id: 'booking-1',
+      status: BookingStatus.CONFIRMED as BookingStatus,
+      slotId: 'old-slot' as string | null,
+    };
+    let newSlotAvailable = true;
+    prisma.booking.findUnique.mockImplementation(async ({ where }) => {
+      if (where.bookingRef === 'PCH-REF') {
+        return { ...bookingState };
+      }
+      return adminBookingRecord(bookingState.status, bookingState.slotId);
+    });
+    prisma.slot.findUnique.mockResolvedValue({
+      id: 'new-slot',
+      date: new Date('2026-11-20T00:00:00.000Z'),
+      startTime: '11:00',
+      isAvailable: true,
+      booking: null,
+    });
+    prisma.slot.updateMany.mockImplementation(async ({ where }) => {
+      if (where.id === 'new-slot') {
+        if (!newSlotAvailable) return { count: 0 };
+        newSlotAvailable = false;
+        return { count: 1 };
+      }
+      return { count: 1 };
+    });
+    prisma.booking.updateMany.mockImplementation(async ({ where, data }) => {
+      if (bookingState.status !== where.status || bookingState.slotId !== where.slotId) {
+        return { count: 0 };
+      }
+      Object.assign(bookingState, data);
+      return { count: 1 };
+    });
+
+    const results = await Promise.allSettled([
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-2'),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+    expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+    expect(results.find((result) => result.status === 'rejected')).toMatchObject({
+      status: 'rejected',
+      reason: { response: { code: 'SLOT_UNAVAILABLE' } },
+    });
+    expect(bookingState).toMatchObject({
+      status: BookingStatus.RESCHEDULED,
+      slotId: 'new-slot',
+    });
   });
 
   it('maps a slot uniqueness race during rescheduling to SLOT_UNAVAILABLE', async () => {
@@ -670,7 +1042,9 @@ describe('BookingsService', () => {
       }),
     );
 
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_UNAVAILABLE' },
     });
     expect(prisma.slot.updateMany).toHaveBeenCalledTimes(1);
@@ -682,6 +1056,7 @@ describe('BookingsService', () => {
       id: 'booking-1',
       status: BookingStatus.CONFIRMED,
       slotId: 'old-slot' as string | null,
+      appointmentType: AppointmentType.SCHEDULED,
     };
     const oldSlotState = { id: 'old-slot', isAvailable: false };
     const newSlotState = { id: 'new-slot', isAvailable: true };
@@ -719,13 +1094,16 @@ describe('BookingsService', () => {
       }
     });
 
-    await expect(bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1')).rejects.toMatchObject({
+    await expect(
+      bookingsService.rescheduleAdmin('PCH-REF', 'new-slot', 'admin-1'),
+    ).rejects.toMatchObject({
       response: { code: 'SLOT_NOT_FOUND' },
     });
     expect(bookingState).toEqual({
       id: 'booking-1',
       status: BookingStatus.CONFIRMED,
       slotId: 'old-slot',
+      appointmentType: AppointmentType.SCHEDULED,
     });
     expect(oldSlotState.isAvailable).toBe(false);
     expect(newSlotState.isAvailable).toBe(true);
@@ -752,7 +1130,11 @@ function adminBookingRecord(
       dateOfBirth: null,
     },
     service: { name: 'Doctor Home Consultation', slug: 'doctor-home-consultation' },
-    slot: slot ?? (slotId ? { date: new Date('2026-11-20T00:00:00.000Z'), startTime: '11:00', endTime: '12:00' } : null),
+    slot:
+      slot ??
+      (slotId
+        ? { date: new Date('2026-11-20T00:00:00.000Z'), startTime: '11:00', endTime: '12:00' }
+        : null),
     bookingItems: [],
     payment: null,
     serviceDetails: null,

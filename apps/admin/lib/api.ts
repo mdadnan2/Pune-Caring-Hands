@@ -17,7 +17,9 @@ export async function adminApiFetch<T>(
   const result = (await response.json()) as ApiEnvelope<T> & { message?: string | string[] };
   if (!response.ok) {
     throw new Error(
-      Array.isArray(result.message) ? result.message.join(', ') : result.message ?? 'Request failed',
+      Array.isArray(result.message)
+        ? result.message.join(', ')
+        : (result.message ?? 'Request failed'),
     );
   }
   return result.data;
@@ -32,7 +34,9 @@ export async function adminApiFile(path: string, token: string): Promise<Blob> {
     let message = 'Could not load the requested file.';
     try {
       const result = (await response.json()) as { message?: string | string[] };
-      message = Array.isArray(result.message) ? result.message.join(', ') : result.message ?? message;
+      message = Array.isArray(result.message)
+        ? result.message.join(', ')
+        : (result.message ?? message);
     } catch {
       // The response may be a non-JSON server error.
     }
@@ -51,6 +55,14 @@ export type AdminBookingListItem = {
   service: { name: string; slug: string };
   slot: { date: string; startTime: string; endTime: string } | null;
   payment: { status: string } | null;
+};
+
+export type AdminBookingsPage = {
+  items: AdminBookingListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
 };
 
 export type AdminBookingDetail = AdminBookingListItem & {
@@ -194,8 +206,8 @@ export async function updateAdminSlot(
 }
 
 export async function deleteAdminSlot(id: string, token: string): Promise<void> {
-  await adminApiFetch<{ id: string; deleted: boolean }>(
-    `/admin/slots/${encodeURIComponent(id)}`,
-    { method: 'DELETE', token },
-  );
+  await adminApiFetch<{ id: string; deleted: boolean }>(`/admin/slots/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    token,
+  });
 }

@@ -34,11 +34,12 @@
 
 ### 5. Medicine Home Delivery
 
-- Pricing: prescription-based (admin sets price after reviewing prescription)
+- Target pricing: prescription-based, with an admin price set after prescription review
 - Patient uploads prescription
 - Appointment type: SCHEDULED (delivery slot)
 - Service-specific fields: prescription upload, notes
-- Price is confirmed by admin after prescription review — booking starts as REQUESTED
+- The current booking flow uses the backend-configured service price; if no price is configured, the amount is ₹0. A post-review price adjustment is not implemented.
+- Booking starts as `PAYMENT_PENDING`, with a `PENDING` payment record.
 
 ### 6. Online Consultation
 
@@ -85,8 +86,9 @@ Step 3: Service-Specific Details
 Step 4: Date & Time Selection
 Step 5: Review
 Step 6: Payment (UPI QR)
-Step 7: Transaction ID + Proof Upload
-Step 8: Confirmation
+Step 7: Required payment proof upload (no transaction ID)
+Step 8: Admin payment verification
+Step 9: Confirmation
 ```
 
 See `instructions/booking.md` for detailed booking rules.
