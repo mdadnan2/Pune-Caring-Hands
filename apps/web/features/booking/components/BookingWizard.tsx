@@ -14,7 +14,7 @@ import {
 import { bookingWizardSchema, type BookingWizardValues } from '../schemas/booking.schema';
 import type { BookingSlot, ServiceApiItem } from '../../../lib/api';
 
-const stepTitles = ['Service', 'Patient', 'Details', 'Slot', 'Review'];
+const stepTitles = ['Service', 'Patient', 'Details', 'Date & Time', 'Review'];
 
 const defaultValues: BookingWizardValues = {
   serviceId: '',
@@ -524,7 +524,7 @@ export default function BookingWizard() {
     if (slug === 'doctor-home-consultation') {
       return (
         <div className="space-y-5">
-          <div className="flex gap-3">
+           <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => {
@@ -533,7 +533,7 @@ export default function BookingWizard() {
               }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'IMMEDIATE' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
-              Immediate request
+               Request Immediate Visit
             </button>
             <button
               type="button"
@@ -543,7 +543,7 @@ export default function BookingWizard() {
               }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'SCHEDULED' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
-              Scheduled appointment
+               Schedule Appointment
             </button>
           </div>
 
@@ -857,7 +857,7 @@ export default function BookingWizard() {
           <div>
             <p className="text-sm text-slate-500">Appointment</p>
             <p className="font-medium text-slate-900">
-              {appointmentType === 'IMMEDIATE' ? 'Immediate request' : 'Scheduled'}
+               {appointmentType === 'IMMEDIATE' ? 'Immediate Visit Request' : 'Scheduled Appointment'}
             </p>
           </div>
           <div>
@@ -931,7 +931,7 @@ export default function BookingWizard() {
             className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white"
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Creating your booking...' : 'Create booking'}
+             {isSubmitting ? 'Confirming your booking...' : 'Confirm Booking'}
           </button>
         )}
       </div>

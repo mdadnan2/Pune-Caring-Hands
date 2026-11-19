@@ -9,6 +9,7 @@ import {
   type PatientBookingHistory,
   type PatientDetail,
 } from '../../../lib/api';
+import { formatAppointmentType, formatBookingStatus } from '../../../lib/ui-text';
 
 const PAGE_SIZE = 20;
 
@@ -130,14 +131,14 @@ function PatientDetailPage({ patientId }: { patientId: string }) {
                             <p className="mt-1 text-sm text-slate-600">{booking.service.name}</p>
                           </div>
                           <span className="text-xs font-semibold text-slate-700">
-                            {booking.status.replaceAll('_', ' ')}
+                             {formatBookingStatus(booking.status)}
                           </span>
                         </div>
                         <p className="mt-3 text-sm text-slate-600">
                           ₹{booking.totalAmount.toLocaleString('en-IN')} ·{' '}
                           {booking.appointmentType === 'SCHEDULED' && booking.slot
                             ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}`
-                            : 'Immediate request'}
+                             : formatAppointmentType('IMMEDIATE')}
                         </p>
                       </Link>
                     ))}
@@ -163,18 +164,18 @@ function PatientDetailPage({ patientId }: { patientId: string }) {
                             <td className="px-4 py-3">
                               {booking.appointmentType === 'SCHEDULED' && booking.slot
                                 ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}`
-                                : 'Immediate request'}
+                                 : formatAppointmentType('IMMEDIATE')}
                             </td>
                             <td className="px-4 py-3">
                               ₹{booking.totalAmount.toLocaleString('en-IN')}
                             </td>
-                            <td className="px-4 py-3">{booking.status.replaceAll('_', ' ')}</td>
+                             <td className="px-4 py-3">{formatBookingStatus(booking.status)}</td>
                             <td className="px-4 py-3">
                               <Link
                                 href={`/bookings/${encodeURIComponent(booking.bookingRef)}`}
                                 className="font-semibold text-teal-700 hover:underline"
                               >
-                                View
+                                 View Booking
                               </Link>
                             </td>
                           </tr>

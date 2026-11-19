@@ -14,9 +14,9 @@ export default function ContactPage() {
         </div>
       </div>
       <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6">
-        <p className="text-sm text-slate-500">WhatsApp</p>
-        <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="mt-2 inline-flex rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500">
-          Chat on WhatsApp
+         <p className="text-sm text-slate-500">WhatsApp support</p>
+        <a href="https://wa.me/+918605906083" target="_blank" rel="noreferrer" className="mt-2 inline-flex rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500">
+           Contact on WhatsApp
         </a>
       </div>
     </div>

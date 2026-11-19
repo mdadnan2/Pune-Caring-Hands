@@ -36,7 +36,7 @@ export default function ServiceDetailsPage({ params }: { params: { slug: string 
             <p className="mt-4 text-3xl font-bold">{service.price}</p>
             <p className="mt-2 text-sm text-slate-300">Service pricing and details appear in the booking flow.</p>
             <Link href="/book" className="mt-6 inline-flex rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-navy-800 hover:bg-slate-100">
-              Book this service
+               Book a Service
             </Link>
           </div>
         </div>

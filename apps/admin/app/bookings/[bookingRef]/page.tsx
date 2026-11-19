@@ -13,6 +13,7 @@ import {
   type AdminAvailableSlot,
   type AdminBookingDetail,
 } from '../../../lib/api';
+import { formatAppointmentType, formatBookingStatus, formatPaymentStatus } from '../../../lib/ui-text';
 
 function BookingDetail({ bookingRef }: { bookingRef: string }) {
   const [token, setToken] = useState('');
@@ -121,7 +122,7 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
     if (!token || !booking) return;
     const currentSlot = booking.slot
       ? `${formatAppointmentDate(booking.slot.date)} · ${booking.slot.startTime}–${booking.slot.endTime}`
-      : 'Immediate request (no slot)';
+       : 'Immediate Visit Request (no slot)';
     if (
       !window.confirm(
         `Cancel this booking?\n\n${currentSlot}\n\nThis will release the assigned slot and mark the booking as cancelled.`,
@@ -213,7 +214,7 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
       <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">{booking.bookingRef}</h1>
-          <p className="mt-1 text-slate-600">{booking.service.name} · {booking.status.replaceAll('_', ' ')}</p>
+           <p className="mt-1 text-slate-600">{booking.service.name} · {formatBookingStatus(booking.status)}</p>
         </div>
         <div className="text-right">
           <p className="text-sm text-slate-500">Booking amount</p>
@@ -239,9 +240,9 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
           <h2 className="text-lg font-semibold">Appointment</h2>
           <dl className="mt-4 space-y-3 text-sm">
             <Detail label="Service" value={booking.service.name} />
-            <Detail label="Type" value={booking.appointmentType.replaceAll('_', ' ')} />
-            <Detail label="Slot" value={booking.slot ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}–${booking.slot.endTime}` : 'No slot (immediate request)'} />
-            <Detail label="Payment status" value={booking.payment?.status ?? '—'} />
+             <Detail label="Type" value={formatAppointmentType(booking.appointmentType)} />
+             <Detail label="Slot" value={booking.slot ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}–${booking.slot.endTime}` : 'No slot (immediate visit request)'} />
+             <Detail label="Payment status" value={booking.payment?.status ? formatPaymentStatus(booking.payment.status) : '—'} />
             <Detail label="Amount" value={`₹${(booking.payment?.amount ?? booking.totalAmount).toLocaleString('en-IN')}`} />
           </dl>
           {booking.bookingItems.length ? (
@@ -268,15 +269,15 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
         <h2 className="text-lg font-semibold">Uploaded files</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           {booking.payment?.proofAvailable ? (
-            <button type="button" onClick={() => void showFile('proof')} className="rounded-full border px-4 py-2 text-sm font-semibold">View payment proof</button>
+             <button type="button" onClick={() => void showFile('proof')} className="rounded-full border px-4 py-2 text-sm font-semibold">View Payment Proof</button>
           ) : <p className="text-sm text-slate-500">No payment proof uploaded.</p>}
           {booking.prescriptionAvailable ? (
-            <button type="button" onClick={() => void showFile('prescription')} className="rounded-full border px-4 py-2 text-sm font-semibold">View prescription</button>
+             <button type="button" onClick={() => void showFile('prescription')} className="rounded-full border px-4 py-2 text-sm font-semibold">View Prescription</button>
           ) : <p className="text-sm text-slate-500">No prescription uploaded.</p>}
         </div>
         {previewUrl ? (
           <div className="mt-5 rounded-xl border bg-slate-50 p-3">
-            <a href={previewUrl} download={`${booking.bookingRef}-attachment`} className="text-sm font-semibold text-teal-700 underline">Download attachment</a>
+             <a href={previewUrl} download={`${booking.bookingRef}-attachment`} className="text-sm font-semibold text-teal-700 underline">Download Attachment</a>
             {previewType.startsWith('image/') ? (
               <img src={previewUrl} alt="Uploaded booking attachment" className="mt-3 max-h-[600px] max-w-full object-contain" />
             ) : previewType === 'application/pdf' ? (
@@ -309,7 +310,7 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
               onClick={() => void openReschedule()}
               className="rounded-full border px-5 py-2.5 text-sm font-semibold disabled:opacity-50"
             >
-              Reschedule
+               Reschedule Booking
             </button>
             <button
               type="button"
@@ -333,7 +334,7 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
                     onChange={(event) => setSelectedSlotId(event.target.value)}
                     className="mt-1 w-full rounded-lg border p-2.5"
                   >
-                    <option value="">Select a slot</option>
+                     <option value="">Select a Slot</option>
                     {availableSlots.map((slot) => (
                       <option key={slot.id} value={slot.id}>
                         {formatAppointmentDate(slot.date)} · {slot.startTime}–{slot.endTime}
@@ -354,7 +355,7 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
                           <strong>Current:</strong>{' '}
                           {booking.slot
                             ? `${formatAppointmentDate(booking.slot.date)} · ${booking.slot.startTime}–${booking.slot.endTime}`
-                            : 'Immediate request (no slot)'}
+                             : 'Immediate Visit Request (no slot)'}
                         </p>
                         <p className="mt-2">
                           <strong>New:</strong> {formatAppointmentDate(selectedSlot.date)} ·{' '}
@@ -395,8 +396,8 @@ function BookingDetail({ bookingRef }: { bookingRef: string }) {
             <textarea value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} className="mt-1 min-h-24 w-full rounded-xl border p-3" maxLength={500} />
           </label>
           <div className="mt-4 flex flex-wrap gap-3">
-            <button type="button" disabled={isSaving} onClick={() => void verify()} className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Verify payment</button>
-            <button type="button" disabled={isSaving} onClick={() => void reject()} className="rounded-full border border-amber-500 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50">Request correction</button>
+             <button type="button" disabled={isSaving} onClick={() => void verify()} className="rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Verify Payment</button>
+             <button type="button" disabled={isSaving} onClick={() => void reject()} className="rounded-full border border-amber-500 px-5 py-2.5 text-sm font-semibold text-amber-800 disabled:opacity-50">Request Correction</button>
           </div>
         </section>
       ) : null}

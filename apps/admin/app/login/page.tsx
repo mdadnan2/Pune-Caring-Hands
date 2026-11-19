@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
         <p className="text-sm font-semibold uppercase tracking-widest text-teal-700">
           Pune Caring Hands
         </p>
-        <h1 className="mt-3 text-3xl font-bold text-slate-900">Admin sign in</h1>
+         <h1 className="mt-3 text-3xl font-bold text-slate-900">Admin Sign In</h1>
         <label className="mt-7 block space-y-2 text-sm font-medium text-slate-700">
           Email
           <input
@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
           disabled={isSubmitting}
           className="mt-6 w-full rounded-full bg-navy-700 px-5 py-3 font-semibold text-white disabled:opacity-50"
         >
-          {isSubmitting ? 'Signing in...' : 'Sign in'}
+           {isSubmitting ? 'Signing In...' : 'Sign In'}
         </button>
       </form>
     </main>

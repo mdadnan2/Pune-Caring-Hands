@@ -200,7 +200,7 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
               disabled={isRefreshing}
               className="mt-3 text-sm font-semibold text-blue-900 underline disabled:opacity-50"
             >
-              {isRefreshing ? 'Refreshing...' : 'Refresh payment status'}
+               {isRefreshing ? 'Refreshing...' : 'Refresh Payment Status'}
             </button>
             {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
           </div>
@@ -255,7 +255,7 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
               disabled={isSubmitting}
               className="mt-6 rounded-full bg-navy-700 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {isSubmitting ? 'Submitting proof...' : 'Submit payment proof'}
+               {isSubmitting ? 'Uploading Proof...' : 'Upload Payment Proof'}
             </button>
           </>
         )}

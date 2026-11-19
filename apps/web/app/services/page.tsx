@@ -26,7 +26,7 @@ export default function ServicesPage() {
               ))}
             </ul>
             <Link href={`/services/${service.slug}`} className="mt-6 inline-flex rounded-full bg-navy-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800">
-              Explore service
+               View Details
             </Link>
           </div>
         ))}

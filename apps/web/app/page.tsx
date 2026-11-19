@@ -5,11 +5,8 @@ export default function HomePage() {
   return (
     <main>
       <section className="bg-slate-50">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl items-start gap-12 px-4 pt-4 pb-14 sm:px-6 sm:pt-6 sm:pb-16 lg:grid-cols-2 lg:px-8 lg:pt-8 lg:pb-20">
           <div>
-            <span className="inline-flex rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-sm font-medium text-teal-700">
-              Trusted home healthcare in Pune
-            </span>
             <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Compassionate care brought to your home.
             </h1>
@@ -18,15 +15,15 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link href="/book" className="inline-flex items-center justify-center rounded-full bg-navy-700 px-6 py-3 text-base font-semibold text-white transition hover:bg-navy-800">
-                Book a service
+                Book a Service
               </Link>
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/+918605906083"
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-slate-100"
               >
-                WhatsApp us
+                Contact on WhatsApp
               </a>
             </div>
             <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-center">
@@ -76,7 +73,7 @@ export default function HomePage() {
             <h2 className="mt-2 text-3xl font-bold text-slate-900">Healthcare services designed for everyday life</h2>
           </div>
           <Link href="/services" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-            View all services →
+             View All Services →
           </Link>
         </div>
 
@@ -97,7 +94,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <Link href={`/services/${service.slug}`} className="mt-6 inline-flex rounded-full bg-navy-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
-                Book now
+                 View Details
               </Link>
             </div>
           ))}
@@ -152,7 +149,7 @@ export default function HomePage() {
               <h2 className="mt-2 text-3xl font-bold text-slate-900">Patients trust our care</h2>
             </div>
             <Link href="/testimonials" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-              Read more →
+               View Testimonials →
             </Link>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -189,10 +186,10 @@ export default function HomePage() {
             </div>
             <div className="flex flex-wrap gap-4">
               <Link href="/book" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-navy-800 hover:bg-slate-100">
-                Book a service
+                Book a Service
               </Link>
-              <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-base font-semibold text-white hover:bg-white/5">
-                WhatsApp support
+              <a href="https://wa.me/+918605906083" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border border-white/20 px-6 py-3 text-base font-semibold text-white hover:bg-white/5">
+                 Contact on WhatsApp
               </a>
             </div>
           </div>

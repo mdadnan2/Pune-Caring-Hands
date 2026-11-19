@@ -18,6 +18,7 @@ import {
   slotFormSchema,
   type SlotFormValues,
 } from '../../features/slots/schemas/slot.schema';
+import { formatBookingStatus } from '../../lib/ui-text';
 
 const PAGE_SIZE = 20;
 
@@ -200,7 +201,7 @@ function SlotManagement() {
             onClick={openCreateForm}
             className="rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white"
           >
-            Create slot
+             Create Slot
           </button>
         </div>
 
@@ -212,7 +213,7 @@ function SlotManagement() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">
-                  {editingSlot ? 'Edit slot' : 'Create slot'}
+                   {editingSlot ? 'Edit Slot' : 'Create Slot'}
                 </h2>
                 {editingSlot?.booking ? (
                   <p className="mt-1 text-sm text-amber-800">
@@ -273,7 +274,7 @@ function SlotManagement() {
                 disabled={isSaving}
                 className="mt-5 rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
               >
-                {isSaving ? 'Saving...' : editingSlot ? 'Save changes' : 'Create slot'}
+                 {isSaving ? 'Saving...' : editingSlot ? 'Save Changes' : 'Create Slot'}
               </button>
             </form>
           </section>
@@ -368,7 +369,7 @@ function SlotManagement() {
                               {slot.booking.bookingRef}
                             </Link>
                             <p className="mt-0.5 text-xs text-slate-500">
-                              {slot.booking.patient.name} · {slot.booking.service.name} · {slot.booking.status.replaceAll('_', ' ')}
+                               {slot.booking.patient.name} · {slot.booking.service.name} · {formatBookingStatus(slot.booking.status)}
                             </p>
                           </div>
                         ) : '—'}
@@ -403,7 +404,7 @@ function SlotManagement() {
                             </>
                           ) : (
                             <Link className="font-semibold text-slate-700 hover:underline" href={`/bookings/${encodeURIComponent(slot.booking.bookingRef)}`}>
-                              View booking
+                               View Booking
                             </Link>
                           )}
                         </div>

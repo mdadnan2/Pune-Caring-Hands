@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import AdminAuth from '../../components/AdminAuth';
 import { getDashboard, type DashboardData } from '../../lib/api';
+import { formatBookingStatus, formatAppointmentType, formatPaymentStatus } from '../../lib/ui-text';
 
 function DashboardPage() {
   const [token, setToken] = useState('');
@@ -62,7 +63,7 @@ function DashboardPage() {
               {[
                 ['Total bookings', data.kpis.totalBookings],
                 ["Today's appointments", data.kpis.todaysBookings],
-                ['Payment verification', data.kpis.pendingPaymentVerification],
+                    ['Payment Verification', data.kpis.pendingPaymentVerification],
                 ['Confirmed', data.kpis.confirmed],
                 ['Completed', data.kpis.completed],
                 ['Cancelled', data.kpis.cancelled],
@@ -106,7 +107,7 @@ function DashboardPage() {
                     Payment verification queue
                   </h2>
                   <Link href="/bookings" className="text-sm font-semibold text-teal-700">
-                    View bookings
+                    View Bookings
                   </Link>
                 </div>
                 {data.paymentVerificationQueue.length ? (
@@ -125,7 +126,7 @@ function DashboardPage() {
                             </p>
                           </div>
                           <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
-                            Submitted
+                             {formatPaymentStatus('SUBMITTED')}
                           </span>
                         </div>
                         {item.payment?.submittedAt ? (
@@ -160,13 +161,13 @@ function DashboardPage() {
                           </p>
                         </div>
                         <span className="text-xs font-semibold text-slate-700">
-                          {booking.status.replaceAll('_', ' ')}
+                           {formatBookingStatus(booking.status)}
                         </span>
                       </div>
                       <p className="mt-3 text-sm text-slate-600">
                         {booking.appointmentType === 'SCHEDULED' && booking.slot
                           ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}`
-                          : 'Immediate request'}{' '}
+                           : formatAppointmentType('IMMEDIATE')}{' '}
                         · ₹{booking.totalAmount.toLocaleString('en-IN')}
                       </p>
                     </Link>

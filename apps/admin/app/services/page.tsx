@@ -190,7 +190,7 @@ function ServicesPage() {
                     className={`mt-1 block text-xs ${selectedId === service.id ? 'text-slate-200' : 'text-slate-500'}`}
                   >
                     {service.isActive ? 'Active' : 'Inactive'} ·{' '}
-                    {service.basePrice !== null ? `₹${service.basePrice}` : 'Item priced'}
+                     {service.basePrice !== null ? `₹${service.basePrice}` : 'Item-Priced'}
                   </span>
                 </button>
               ))}
@@ -252,7 +252,7 @@ function ServicesPage() {
                     onClick={() => void saveService(selected)}
                     className="mt-5 min-h-11 rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                   >
-                    Save service
+                     Save Changes
                   </button>
                 </section>
 
@@ -288,7 +288,7 @@ function ServicesPage() {
                         disabled={isSaving}
                         className="min-h-11 rounded-full bg-teal-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
                       >
-                        Add item
+                         {selected.slug === 'xray-at-home' ? 'Add X-Ray Type' : 'Add Test'}
                       </button>
                     </form>
                     <div className="mt-4 grid gap-3">
@@ -338,7 +338,7 @@ function ServicesPage() {
                               onClick={() => void saveItem(item)}
                               className="min-h-11 rounded-full border px-4 py-2 text-sm font-semibold text-teal-700 disabled:opacity-50"
                             >
-                              Save
+                               Save Changes
                             </button>
                           </article>
                         ))

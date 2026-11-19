@@ -10,6 +10,7 @@ import {
   type AdminBookingListItem,
   type AdminService,
 } from '../../lib/api';
+import { formatAppointmentType, formatBookingStatus, formatPaymentStatus } from '../../lib/ui-text';
 
 const statuses = Object.values(BookingStatus);
 const PAGE_SIZE = 20;
@@ -100,7 +101,7 @@ function BookingList() {
               <option value="">All statuses</option>
               {statuses.map((value) => (
                 <option key={value} value={value}>
-                  {value.replaceAll('_', ' ')}
+                   {formatBookingStatus(value)}
                 </option>
               ))}
             </select>
@@ -212,11 +213,13 @@ function BookingList() {
                     <td className="px-4 py-3">
                       {booking.slot
                         ? `${new Date(booking.slot.date).toLocaleDateString('en-IN')} · ${booking.slot.startTime}`
-                        : 'Immediate request'}
+                        : formatAppointmentType('IMMEDIATE')}
                     </td>
                     <td className="px-4 py-3">₹{booking.totalAmount.toLocaleString('en-IN')}</td>
-                    <td className="px-4 py-3">{booking.payment?.status ?? '—'}</td>
-                    <td className="px-4 py-3">{booking.status.replaceAll('_', ' ')}</td>
+                    <td className="px-4 py-3">
+                      {booking.payment?.status ? formatPaymentStatus(booking.payment.status) : '—'}
+                    </td>
+                    <td className="px-4 py-3">{formatBookingStatus(booking.status)}</td>
                   </tr>
                 ))}
               </tbody>

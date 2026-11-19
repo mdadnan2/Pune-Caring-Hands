@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel --filter './apps/*' --filter './backend' dev",
+    "dev": "pnpm --parallel --filter @pch/web --filter @pch/admin --filter backend dev",
     "build": "pnpm --filter @pch/shared build && pnpm --parallel --filter @pch/admin --filter @pch/web --filter backend build",
     "lint": "pnpm --recursive lint",
     "typecheck": "pnpm --recursive typecheck",

@@ -90,7 +90,7 @@ function PatientsPage() {
                       href={`/patients/${encodeURIComponent(patient.id)}`}
                       className="min-h-11 rounded-full border px-4 py-2 text-sm font-semibold text-teal-700"
                     >
-                      View
+                       View Patient
                     </Link>
                   </div>
                   <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
@@ -141,7 +141,7 @@ function PatientsPage() {
                           href={`/patients/${encodeURIComponent(patient.id)}`}
                           className="font-semibold text-teal-700 hover:underline"
                         >
-                          View
+                           View Patient
                         </Link>
                       </td>
                     </tr>

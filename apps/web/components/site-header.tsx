@@ -11,7 +11,7 @@ const navItems = [
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-slate-200 bg-white/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-800 text-lg font-bold text-white">
@@ -33,18 +33,18 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-3">
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/+918605906083"
             target="_blank"
             rel="noreferrer"
             className="hidden rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 sm:inline-flex"
           >
-            WhatsApp
+             Contact on WhatsApp
           </a>
           <Link
             href="/book"
             className="inline-flex items-center justify-center rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800"
           >
-            Book now
+             Book a Service
           </Link>
         </div>
       </div>

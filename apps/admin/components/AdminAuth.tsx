@@ -75,7 +75,7 @@ export default function AdminAuth({ children }: { children: React.ReactNode }) {
               router.replace('/login');
             }}
           >
-            Sign out
+             Sign Out
           </button>
         </div>
       </header>
