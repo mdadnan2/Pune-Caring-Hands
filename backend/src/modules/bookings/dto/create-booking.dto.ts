@@ -8,6 +8,7 @@ import {
   IsArray,
   IsDateString,
   IsObject,
+  IsIn,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { AppointmentType } from '@pch/shared';
@@ -60,6 +61,10 @@ export class CreateBookingDto {
   @IsOptional()
   @IsDateString()
   patientDateOfBirth?: string;
+
+  @IsOptional()
+  @IsIn(['MALE', 'FEMALE', 'OTHER'])
+  gender?: 'MALE' | 'FEMALE' | 'OTHER';
 
   @IsOptional()
   @IsUUID()

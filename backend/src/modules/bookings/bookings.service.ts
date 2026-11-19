@@ -188,6 +188,12 @@ export class BookingsService {
         if (dto.patientMapsLink) {
           serviceDetails.mapsLink = dto.patientMapsLink;
         }
+        if (dto.patientPinCode) {
+          serviceDetails.pinCode = dto.patientPinCode;
+        }
+        if (dto.gender) {
+          serviceDetails.gender = dto.gender;
+        }
         if (prescriptionFileKey) {
           serviceDetails.prescriptionFileKey = prescriptionFileKey;
         }

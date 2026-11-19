@@ -18,7 +18,8 @@ All authenticated admins have access to all admin functionality.
 - Confirmed bookings can be completed, cancelled, or rescheduled from booking detail. Cancellation releases and detaches its slot; rescheduling atomically reserves a future global slot and releases the previous one.
 - Booking operation routes are `POST /api/v1/admin/bookings/:bookingRef/cancel`, `POST /api/v1/admin/bookings/:bookingRef/reschedule`, and `POST /api/v1/admin/bookings/:bookingRef/complete`. All require admin JWT authentication.
 - Operational transitions are limited to `CONFIRMED → CANCELLED`, `CONFIRMED → RESCHEDULED`, and `CONFIRMED → COMPLETED`. Payment verification and correction transitions are also logged server-side. Payment records are unchanged by completion, cancellation, and rescheduling.
-- Other admin modules described below remain outside the currently implemented booking/slot-management slice.
+- The admin dashboard, service/pricing management, and patient management modules are implemented with the existing JWT guard.
+- Patient alternate mobile, PIN code, Maps link, and gender are available from existing booking `serviceDetails` fields and do not require a Prisma schema change.
 
 ---
 

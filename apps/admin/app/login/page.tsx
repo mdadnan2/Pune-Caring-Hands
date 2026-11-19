@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem('pch_admin_token')) router.replace('/bookings');
+    if (sessionStorage.getItem('pch_admin_token')) router.replace('/dashboard');
   }, [router]);
 
   const login = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -27,7 +27,7 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
       sessionStorage.setItem('pch_admin_token', result.accessToken);
-      router.replace('/bookings');
+      router.replace('/dashboard');
     } catch (loginError) {
       setError(loginError instanceof Error ? loginError.message : 'Login failed.');
     } finally {
@@ -37,8 +37,13 @@ export default function AdminLoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12">
-      <form onSubmit={(event) => void login(event)} className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-widest text-teal-700">Pune Caring Hands</p>
+      <form
+        onSubmit={(event) => void login(event)}
+        className="w-full max-w-md rounded-3xl border bg-white p-8 shadow-sm"
+      >
+        <p className="text-sm font-semibold uppercase tracking-widest text-teal-700">
+          Pune Caring Hands
+        </p>
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Admin sign in</h1>
         <label className="mt-7 block space-y-2 text-sm font-medium text-slate-700">
           Email
@@ -62,7 +67,9 @@ export default function AdminLoginPage() {
             className="w-full rounded-xl border border-slate-300 px-4 py-3"
           />
         </label>
-        {error ? <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+        {error ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>
+        ) : null}
         <button
           type="submit"
           disabled={isSubmitting}

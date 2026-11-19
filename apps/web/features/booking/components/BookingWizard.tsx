@@ -341,6 +341,7 @@ export default function BookingWizard() {
         patientPinCode: values.patientPinCode,
         patientMapsLink: values.patientMapsLink || undefined,
         patientDateOfBirth: values.patientDateOfBirth || undefined,
+        gender: values.gender || undefined,
         slotId: values.appointmentType === 'SCHEDULED' ? values.slotId || undefined : undefined,
         serviceItemIds: values.serviceItemIds.length ? values.serviceItemIds : undefined,
         notes:

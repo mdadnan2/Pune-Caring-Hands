@@ -139,6 +139,99 @@ export type AdminSlotBooking = {
   service: { name: string };
 };
 
+export type DashboardData = {
+  kpis: {
+    totalBookings: number;
+    todaysBookings: number;
+    pendingPaymentVerification: number;
+    confirmed: number;
+    completed: number;
+    cancelled: number;
+    rescheduled: number;
+  };
+  serviceCounts: Array<{ serviceId: string; name: string; count: number }>;
+  recentBookings: Array<{
+    bookingRef: string;
+    status: string;
+    appointmentType: string;
+    totalAmount: number;
+    createdAt: string;
+    patient: { name: string };
+    service: { id: string; name: string };
+    slot: { date: string; startTime: string; endTime: string } | null;
+  }>;
+  paymentVerificationQueue: Array<{
+    bookingRef: string;
+    createdAt: string;
+    patient: { name: string };
+    service: { name: string };
+    payment: { status: string; submittedAt: string | null } | null;
+  }>;
+};
+
+export type AdminServiceDetail = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  basePrice: number | null;
+  isActive: boolean;
+  sortOrder: number;
+  serviceItems: AdminServiceItem[];
+};
+
+export type AdminServiceItem = {
+  id: string;
+  serviceId: string;
+  name: string;
+  price: number;
+  isActive: boolean;
+};
+
+export type PatientListItem = {
+  id: string;
+  name: string;
+  phone: string;
+  alternatePhone: string | null;
+  email: string | null;
+  address: string;
+  pinCode: string | null;
+  dateOfBirth: string | null;
+  gender: 'MALE' | 'FEMALE' | 'OTHER' | null;
+  bookingCount: number;
+  lastBookingAt: string | null;
+};
+
+export type PatientsPage = {
+  items: PatientListItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
+export type PatientDetail = PatientListItem & {
+  mapsLink: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PatientBookingHistory = {
+  items: Array<{
+    bookingRef: string;
+    status: string;
+    appointmentType: string;
+    totalAmount: number;
+    createdAt: string;
+    service: { name: string; slug: string };
+    slot: { date: string; startTime: string; endTime: string } | null;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+};
+
 export type AdminSlot = {
   id: string;
   date: string;
@@ -203,6 +296,88 @@ export async function updateAdminSlot(
     token,
     body: JSON.stringify(changes),
   });
+}
+
+export async function getDashboard(token: string): Promise<DashboardData> {
+  return adminApiFetch<DashboardData>('/admin/dashboard', { token });
+}
+
+export async function getAdminServices(token: string): Promise<AdminServiceDetail[]> {
+  return adminApiFetch<AdminServiceDetail[]>('/admin/services', { token });
+}
+
+export async function updateAdminService(
+  serviceId: string,
+  changes: Partial<{
+    name: string;
+    description: string;
+    basePrice: number;
+    sortOrder: number;
+    isActive: boolean;
+  }>,
+  token: string,
+): Promise<AdminServiceDetail> {
+  return adminApiFetch<AdminServiceDetail>(`/admin/services/${encodeURIComponent(serviceId)}`, {
+    method: 'PATCH',
+    token,
+    body: JSON.stringify(changes),
+  });
+}
+
+export async function createAdminServiceItem(
+  serviceId: string,
+  item: { name: string; price: number; isActive: boolean },
+  token: string,
+): Promise<AdminServiceItem> {
+  return adminApiFetch<AdminServiceItem>(`/admin/services/${encodeURIComponent(serviceId)}/items`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(item),
+  });
+}
+
+export async function updateAdminServiceItem(
+  serviceId: string,
+  itemId: string,
+  changes: Partial<{ name: string; price: number; isActive: boolean }>,
+  token: string,
+): Promise<AdminServiceItem> {
+  return adminApiFetch<AdminServiceItem>(
+    `/admin/services/${encodeURIComponent(serviceId)}/items/${encodeURIComponent(itemId)}`,
+    { method: 'PATCH', token, body: JSON.stringify(changes) },
+  );
+}
+
+export async function getAdminPatients(
+  filters: { search?: string; page: number; pageSize: number },
+  token: string,
+): Promise<PatientsPage> {
+  const params = new URLSearchParams();
+  if (filters.search?.trim()) params.set('search', filters.search.trim());
+  params.set('page', String(filters.page));
+  params.set('pageSize', String(filters.pageSize));
+  return adminApiFetch<PatientsPage>(`/admin/patients?${params.toString()}`, { token });
+}
+
+export async function getAdminPatient(patientId: string, token: string): Promise<PatientDetail> {
+  return adminApiFetch<PatientDetail>(`/admin/patients/${encodeURIComponent(patientId)}`, {
+    token,
+  });
+}
+
+export async function getAdminPatientBookings(
+  patientId: string,
+  filters: { page: number; pageSize: number },
+  token: string,
+): Promise<PatientBookingHistory> {
+  const params = new URLSearchParams({
+    page: String(filters.page),
+    pageSize: String(filters.pageSize),
+  });
+  return adminApiFetch<PatientBookingHistory>(
+    `/admin/patients/${encodeURIComponent(patientId)}/bookings?${params.toString()}`,
+    { token },
+  );
 }
 
 export async function deleteAdminSlot(id: string, token: string): Promise<void> {
