@@ -15,6 +15,10 @@
     "db:seed": "pnpm --filter backend prisma db seed",
     "db:studio": "pnpm --filter backend prisma studio"
   },
+  "prisma": {
+    "schema": "prisma/schema.prisma",
+    "seed": "pnpm --filter backend prisma:seed"
+  },
   "devDependencies": {
     "@prisma/client": "5.19.1",
     "prettier": "^3.3.3",

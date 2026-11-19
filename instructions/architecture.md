@@ -53,7 +53,7 @@ Neither frontend application accesses the database directly.
 
 - Single Prisma schema at the repository root
 - Migrations live in `prisma/migrations/`
-- Seed script at `prisma/seed.ts`
+- Seed script at `backend/prisma/seed.ts`
 - Backend references schema via `prisma.schema` in `backend/package.json`
 
 ---
