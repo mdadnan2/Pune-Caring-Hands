@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { PatientQueryDto } from './dto/patient-query.dto';
+import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @Injectable()
 export class PatientsService {
@@ -31,7 +32,11 @@ export class PatientsService {
           name: true,
           phone: true,
           email: true,
+          alternatePhone: true,
           address: true,
+          pinCode: true,
+          mapsLink: true,
+          gender: true,
           dateOfBirth: true,
           createdAt: true,
           _count: { select: { bookings: true } },
@@ -40,7 +45,6 @@ export class PatientsService {
             orderBy: { createdAt: 'desc' },
             select: {
               createdAt: true,
-              serviceDetails: true,
             },
           },
         },
@@ -50,27 +54,17 @@ export class PatientsService {
 
     return {
       items: items.map((patient) => {
-        const details =
-          patient.bookings[0]?.serviceDetails &&
-          typeof patient.bookings[0].serviceDetails === 'object'
-            ? (patient.bookings[0].serviceDetails as Record<string, unknown>)
-            : {};
         return {
           id: patient.id,
           name: patient.name,
           phone: patient.phone,
-          alternatePhone:
-            typeof details.alternatePhone === 'string' ? details.alternatePhone : null,
+          alternatePhone: patient.alternatePhone,
           email: patient.email,
           address: patient.address,
-          pinCode: typeof details.pinCode === 'string' ? details.pinCode : null,
-          mapsLink: typeof details.mapsLink === 'string' ? details.mapsLink : null,
+          pinCode: patient.pinCode,
+          mapsLink: patient.mapsLink,
           dateOfBirth: patient.dateOfBirth,
-          gender:
-            typeof details.gender === 'string' &&
-            ['MALE', 'FEMALE', 'OTHER'].includes(details.gender)
-              ? (details.gender as 'MALE' | 'FEMALE' | 'OTHER')
-              : null,
+          gender: patient.gender,
           createdAt: patient.createdAt,
           bookingCount: patient._count.bookings,
           lastBookingAt: patient.bookings[0]?.createdAt ?? null,
@@ -90,8 +84,12 @@ export class PatientsService {
         id: true,
         name: true,
         phone: true,
+        alternatePhone: true,
         email: true,
         address: true,
+        pinCode: true,
+        mapsLink: true,
+        gender: true,
         dateOfBirth: true,
         createdAt: true,
         updatedAt: true,
@@ -101,33 +99,35 @@ export class PatientsService {
     if (!patient) {
       throw new NotFoundException({ message: 'Patient not found', code: 'PATIENT_NOT_FOUND' });
     }
-    const latest = await this.prisma.booking.findFirst({
-      where: { patientId },
-      orderBy: { createdAt: 'desc' },
-      select: { serviceDetails: true },
-    });
-    const details =
-      latest?.serviceDetails && typeof latest.serviceDetails === 'object'
-        ? (latest.serviceDetails as Record<string, unknown>)
-        : {};
     return {
       id: patient.id,
       name: patient.name,
       phone: patient.phone,
-      alternatePhone: typeof details.alternatePhone === 'string' ? details.alternatePhone : null,
+      alternatePhone: patient.alternatePhone,
       email: patient.email,
       address: patient.address,
-      pinCode: typeof details.pinCode === 'string' ? details.pinCode : null,
-      mapsLink: typeof details.mapsLink === 'string' ? details.mapsLink : null,
+      pinCode: patient.pinCode,
+      mapsLink: patient.mapsLink,
       dateOfBirth: patient.dateOfBirth,
-      gender:
-        typeof details.gender === 'string' && ['MALE', 'FEMALE', 'OTHER'].includes(details.gender)
-          ? (details.gender as 'MALE' | 'FEMALE' | 'OTHER')
-          : null,
+      gender: patient.gender,
       createdAt: patient.createdAt,
       updatedAt: patient.updatedAt,
       bookingCount: patient._count.bookings,
     };
+  }
+
+  async update(patientId: string, dto: UpdatePatientDto) {
+    if (Object.keys(dto).length === 0) return this.getById(patientId);
+    const patient = await this.prisma.patient.findUnique({ where: { id: patientId }, select: { id: true } });
+    if (!patient) throw new NotFoundException({ message: 'Patient not found', code: 'PATIENT_NOT_FOUND' });
+    return this.prisma.patient.update({
+      where: { id: patientId },
+      data: { ...dto, ...(dto.dateOfBirth !== undefined && { dateOfBirth: new Date(dto.dateOfBirth) }) },
+      select: {
+        id: true, name: true, phone: true, alternatePhone: true, email: true, address: true,
+        pinCode: true, mapsLink: true, gender: true, dateOfBirth: true, createdAt: true, updatedAt: true,
+      },
+    });
   }
 
   async getBookingHistory(patientId: string, filters: PatientQueryDto) {

@@ -7,18 +7,7 @@ export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getDashboard() {
-    const now = new Date();
-    const puneToday = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'Asia/Kolkata',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    })
-      .format(now)
-      .replaceAll('/', '-');
-    const today = new Date(`${puneToday}T00:00:00+05:30`);
-    const tomorrow = new Date(today);
-    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const { appointmentStart, appointmentEnd, slotStart, slotEnd } = getPuneDayBounds(new Date());
 
     const [
       totalBookings,
@@ -34,7 +23,12 @@ export class DashboardService {
     ] = await Promise.all([
       this.prisma.booking.count(),
       this.prisma.booking.count({
-        where: { createdAt: { gte: today, lt: tomorrow } },
+        where: {
+          OR: [
+            { slot: { date: { gte: slotStart, lt: slotEnd } } },
+            { appointmentType: 'IMMEDIATE', createdAt: { gte: appointmentStart, lt: appointmentEnd } },
+          ],
+        },
       }),
       this.prisma.booking.count({
         where: { status: BookingStatus.PAYMENT_VERIFICATION },
@@ -104,4 +98,26 @@ export class DashboardService {
       paymentVerificationQueue: paymentQueue,
     };
   }
+}
+
+export function getPuneDayBounds(now: Date): {
+  appointmentStart: Date;
+  appointmentEnd: Date;
+  slotStart: Date;
+  slotEnd: Date;
+} {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const values = new Map(parts.map((part) => [part.type, part.value]));
+  const puneDate = `${values.get('year')}-${values.get('month')}-${values.get('day')}`;
+  const appointmentStart = new Date(`${puneDate}T00:00:00+05:30`);
+  const appointmentEnd = new Date(appointmentStart.getTime() + 24 * 60 * 60 * 1000);
+  const slotStart = new Date(`${puneDate}T00:00:00.000Z`);
+  const slotEnd = new Date(slotStart.getTime() + 24 * 60 * 60 * 1000);
+
+  return { appointmentStart, appointmentEnd, slotStart, slotEnd };
 }

@@ -53,14 +53,18 @@ model Admin {
 // ─── Patient ──────────────────────────────────────────────────────────────────
 
 model Patient {
-  id          String    @id @default(uuid())
-  name        String
-  phone       String    @unique
-  email       String?
-  address     String
-  dateOfBirth DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id             String    @id @default(uuid())
+  name           String
+  phone          String    @unique
+  alternatePhone String?
+  email          String?
+  address        String
+  pinCode        String?
+  mapsLink       String?
+  gender         String?
+  dateOfBirth    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   bookings Booking[]
 

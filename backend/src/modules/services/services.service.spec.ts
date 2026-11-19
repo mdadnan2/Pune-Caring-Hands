@@ -65,6 +65,34 @@ describe('ServicesService admin management', () => {
     );
   });
 
+  it('rejects a base price for item-priced services', async () => {
+    prisma.service.findUnique.mockResolvedValue({
+      id: 'service-1',
+      slug: 'blood-test-at-home',
+      basePrice: null,
+    });
+
+    await expect(service.updateAdmin('service-1', { basePrice: 500 })).rejects.toMatchObject({
+      response: { code: 'INVALID_PRICING_CONFIGURATION' },
+    });
+    expect(prisma.service.update).not.toHaveBeenCalled();
+  });
+
+  it('clears a legacy base price when an item-priced service is edited', async () => {
+    prisma.service.findUnique.mockResolvedValue({
+      id: 'service-1',
+      slug: 'xray-at-home',
+      basePrice: 800,
+    });
+    prisma.service.update.mockResolvedValue({ id: 'service-1', basePrice: null });
+
+    await service.updateAdmin('service-1', { isActive: false });
+
+    expect(prisma.service.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { isActive: false, basePrice: null } }),
+    );
+  });
+
   it('creates and updates active blood-test or X-ray items', async () => {
     prisma.service.findUnique.mockResolvedValue({ id: 'service-1', name: 'Blood Tests' });
     prisma.serviceItem.create.mockResolvedValue({

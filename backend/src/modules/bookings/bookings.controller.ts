@@ -12,6 +12,7 @@ import { UPLOAD_MAX_FILE_SIZE_BYTES } from '@pch/shared';
 import { BookingsService } from './bookings.service';
 import type { UploadedFile as BookingUploadedFile } from '../uploads/uploads.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('bookings')
 export class BookingsController {
@@ -22,6 +23,7 @@ export class BookingsController {
    * Creates a booking. Accepts multipart/form-data to support prescription upload.
    */
   @Post()
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'prescription', maxCount: 1 }], {
       storage: undefined,

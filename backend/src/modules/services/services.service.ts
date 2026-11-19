@@ -47,16 +47,24 @@ export class ServicesService {
   }
 
   async updateAdmin(serviceId: string, dto: UpdateAdminServiceDto) {
-    await this.getAdminById(serviceId);
+    const service = await this.getAdminById(serviceId);
     if (Object.keys(dto).length === 0) {
       throw new BadRequestException({
         message: 'Provide at least one field to update.',
         code: 'VALIDATION_ERROR',
       });
     }
+    const isItemPricedService = service.slug === 'blood-test-at-home' || service.slug === 'xray-at-home';
+    if (isItemPricedService && dto.basePrice !== undefined) {
+      throw new BadRequestException({
+        message: 'Item-priced services cannot have a base price.',
+        code: 'INVALID_PRICING_CONFIGURATION',
+      });
+    }
+    const data = isItemPricedService ? { ...dto, basePrice: null } : dto;
     return this.prisma.service.update({
       where: { id: serviceId },
-      data: dto,
+      data,
       include: { serviceItems: { orderBy: [{ isActive: 'desc' }, { name: 'asc' }] } },
     });
   }

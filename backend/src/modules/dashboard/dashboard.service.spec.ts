@@ -1,8 +1,24 @@
 import { BookingStatus, PaymentStatus } from '@pch/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { DashboardService } from './dashboard.service';
+import { DashboardService, getPuneDayBounds } from './dashboard.service';
 
 describe('DashboardService', () => {
+  it('uses the Pune calendar day for slot dates and immediate booking timestamps', () => {
+    const bounds = getPuneDayBounds(new Date('2026-11-18T18:29:59.999Z'));
+
+    expect(bounds.slotStart).toEqual(new Date('2026-11-18T00:00:00.000Z'));
+    expect(bounds.slotEnd).toEqual(new Date('2026-11-19T00:00:00.000Z'));
+    expect(bounds.appointmentStart).toEqual(new Date('2026-11-17T18:30:00.000Z'));
+    expect(bounds.appointmentEnd).toEqual(new Date('2026-11-18T18:30:00.000Z'));
+  });
+
+  it('moves the Pune calendar day at the timezone boundary', () => {
+    const bounds = getPuneDayBounds(new Date('2026-11-18T18:30:00.000Z'));
+
+    expect(bounds.slotStart).toEqual(new Date('2026-11-19T00:00:00.000Z'));
+    expect(bounds.appointmentStart).toEqual(new Date('2026-11-18T18:30:00.000Z'));
+  });
+
   it('returns KPI counts, service counts, recent bookings, and payment queue', async () => {
     const prisma = {
       booking: {

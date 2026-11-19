@@ -1,7 +1,8 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { PatientQueryDto } from './dto/patient-query.dto';
 import { PatientsService } from './patients.service';
+import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @Controller('admin/patients')
 @UseGuards(JwtAuthGuard)
@@ -21,5 +22,10 @@ export class PatientsController {
   @Get(':patientId/bookings')
   bookings(@Param('patientId') patientId: string, @Query() query: PatientQueryDto) {
     return this.patientsService.getBookingHistory(patientId, query);
+  }
+
+  @Patch(':patientId')
+  update(@Param('patientId') patientId: string, @Body() dto: UpdatePatientDto) {
+    return this.patientsService.update(patientId, dto);
   }
 }

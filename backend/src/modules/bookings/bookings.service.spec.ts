@@ -197,6 +197,78 @@ describe('BookingsService', () => {
     });
   });
 
+  it('sums active blood-test item prices and ignores client pricing fields', async () => {
+    prisma.service.findFirst.mockResolvedValue({
+      id: 'svc-blood',
+      slug: 'blood-test-at-home',
+      basePrice: 1,
+      isActive: true,
+      serviceItems: [
+        { id: 'item-1', name: 'CBC', price: 500, isActive: true },
+        { id: 'item-2', name: 'LFT', price: 900, isActive: true },
+      ],
+    });
+    prisma.patient.upsert.mockResolvedValue({ id: 'patient-1' });
+    prisma.booking.create.mockResolvedValue({
+      bookingRef: 'PCH-20261118-0001',
+      status: BookingStatus.PAYMENT_PENDING,
+      appointmentType: AppointmentType.IMMEDIATE,
+      totalAmount: 1400,
+      service: { name: 'Blood Test at Home', slug: 'blood-test-at-home' },
+      slot: null,
+      bookingItems: [
+        { serviceItemId: 'item-1', name: 'CBC', price: 500 },
+        { serviceItemId: 'item-2', name: 'LFT', price: 900 },
+      ],
+      payment: { id: 'pay-1', amount: 1400, status: PaymentStatus.PENDING },
+      createdAt: new Date(),
+    });
+
+    await bookingsService.create({
+      serviceId: 'svc-blood',
+      appointmentType: AppointmentType.IMMEDIATE,
+      patientName: 'Asha Patil',
+      patientPhone: '9876543210',
+      patientAddress: 'Flat 1, Pune Maharashtra',
+      patientPinCode: '411045',
+      serviceItemIds: ['item-1', 'item-2'],
+      serviceDetails: { totalAmount: 1, price: 1 },
+    });
+
+    expect(prisma.booking.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          totalAmount: 1400,
+          payment: { create: { amount: 1400, status: PaymentStatus.PENDING } },
+        }),
+      }),
+    );
+  });
+
+  it('rejects inactive or duplicate item selections', async () => {
+    prisma.service.findFirst.mockResolvedValue({
+      id: 'svc-xray',
+      slug: 'xray-at-home',
+      basePrice: null,
+      isActive: true,
+      serviceItems: [{ id: 'item-1', name: 'Chest X-Ray', price: 700, isActive: true }],
+    });
+
+    await expect(bookingsService.create({
+      serviceId: 'svc-xray', appointmentType: AppointmentType.IMMEDIATE,
+      patientName: 'Asha Patil', patientPhone: '9876543210',
+      patientAddress: 'Flat 1, Pune Maharashtra', patientPinCode: '411045',
+      serviceItemIds: ['item-1', 'item-1'],
+    })).rejects.toMatchObject({ response: { code: 'VALIDATION_ERROR' } });
+
+    await expect(bookingsService.create({
+      serviceId: 'svc-xray', appointmentType: AppointmentType.IMMEDIATE,
+      patientName: 'Asha Patil', patientPhone: '9876543210',
+      patientAddress: 'Flat 1, Pune Maharashtra', patientPinCode: '411045',
+      serviceItemIds: ['inactive-item'],
+    })).rejects.toMatchObject({ response: { code: 'INVALID_SERVICE_ITEM' } });
+  });
+
   it('rejects medicine delivery when the prescription is missing, even if notes are supplied', async () => {
     prisma.service.findFirst.mockResolvedValue({
       id: 'svc-medicine',

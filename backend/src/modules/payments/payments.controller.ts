@@ -10,6 +10,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UPLOAD_MAX_FILE_SIZE_BYTES } from '@pch/shared';
 import type { UploadedFile as ProofFile } from '../uploads/uploads.service';
 import { PaymentsService } from './payments.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('payments')
 export class PaymentsController {
@@ -23,6 +24,7 @@ export class PaymentsController {
   }
 
   @Post(':bookingRef/proof')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @UseInterceptors(
     FileInterceptor('proof', {
       storage: undefined,

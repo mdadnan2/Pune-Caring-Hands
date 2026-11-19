@@ -94,7 +94,26 @@ export class BookingsService {
     let totalAmount = 0;
     let validatedItemIds: string[] = [];
 
-    if (service.basePrice !== null) {
+    const isItemPricedService = service.slug === 'blood-test-at-home' || service.slug === 'xray-at-home';
+    if (isItemPricedService) {
+      if (!dto.serviceItemIds || new Set(dto.serviceItemIds).size !== dto.serviceItemIds.length) {
+        throw new BadRequestException({
+          message: 'Selected service items must be unique.',
+          code: 'INVALID_SERVICE_ITEM',
+        });
+      }
+      const selectedItems = service.serviceItems.filter((item: { id: string; price: number }) =>
+        dto.serviceItemIds?.includes(item.id),
+      );
+      if (selectedItems.length !== dto.serviceItemIds?.length) {
+        throw new BadRequestException({
+          message: 'One or more selected service items are invalid',
+          code: 'INVALID_SERVICE_ITEM',
+        });
+      }
+      totalAmount = selectedItems.reduce((sum: number, item: { price: number }) => sum + item.price, 0);
+      validatedItemIds = selectedItems.map((item: { id: string }) => item.id);
+    } else if (service.basePrice !== null) {
       totalAmount = service.basePrice;
     } else if (dto.serviceItemIds && dto.serviceItemIds.length > 0) {
       const selectedItems = service.serviceItems.filter((item: { id: string; price: number }) =>
@@ -148,15 +167,23 @@ export class BookingsService {
           update: {
             name: dto.patientName,
             address: dto.patientAddress,
-            ...(dto.patientEmail && { email: dto.patientEmail }),
-            ...(dto.patientDateOfBirth && { dateOfBirth: new Date(dto.patientDateOfBirth) }),
+            ...(dto.patientEmail !== undefined && { email: dto.patientEmail }),
+            ...(dto.patientDateOfBirth !== undefined && { dateOfBirth: new Date(dto.patientDateOfBirth) }),
+            ...(dto.patientAlternatePhone !== undefined && { alternatePhone: dto.patientAlternatePhone }),
+            ...(dto.patientPinCode !== undefined && { pinCode: dto.patientPinCode }),
+            ...(dto.patientMapsLink !== undefined && { mapsLink: dto.patientMapsLink }),
+            ...(dto.gender !== undefined && { gender: dto.gender }),
           },
           create: {
             name: dto.patientName,
             phone: dto.patientPhone,
             address: dto.patientAddress,
-            ...(dto.patientEmail && { email: dto.patientEmail }),
-            ...(dto.patientDateOfBirth && { dateOfBirth: new Date(dto.patientDateOfBirth) }),
+            ...(dto.patientEmail !== undefined && { email: dto.patientEmail }),
+            ...(dto.patientDateOfBirth !== undefined && { dateOfBirth: new Date(dto.patientDateOfBirth) }),
+            ...(dto.patientAlternatePhone !== undefined && { alternatePhone: dto.patientAlternatePhone }),
+            ...(dto.patientPinCode !== undefined && { pinCode: dto.patientPinCode }),
+            ...(dto.patientMapsLink !== undefined && { mapsLink: dto.patientMapsLink }),
+            ...(dto.gender !== undefined && { gender: dto.gender }),
           },
         });
 
@@ -182,18 +209,6 @@ export class BookingsService {
         }
 
         const serviceDetails = toPrismaJsonObject(dto.serviceDetails ?? {});
-        if (dto.patientAlternatePhone) {
-          serviceDetails.alternatePhone = dto.patientAlternatePhone;
-        }
-        if (dto.patientMapsLink) {
-          serviceDetails.mapsLink = dto.patientMapsLink;
-        }
-        if (dto.patientPinCode) {
-          serviceDetails.pinCode = dto.patientPinCode;
-        }
-        if (dto.gender) {
-          serviceDetails.gender = dto.gender;
-        }
         if (prescriptionFileKey) {
           serviceDetails.prescriptionFileKey = prescriptionFileKey;
         }
@@ -370,7 +385,17 @@ export class BookingsService {
       where: { bookingRef },
       include: {
         patient: {
-          select: { name: true, phone: true, email: true, address: true, dateOfBirth: true },
+          select: {
+            name: true,
+            phone: true,
+            alternatePhone: true,
+            email: true,
+            address: true,
+            pinCode: true,
+            mapsLink: true,
+            gender: true,
+            dateOfBirth: true,
+          },
         },
         service: { select: { name: true, slug: true } },
         slot: { select: { date: true, startTime: true, endTime: true } },

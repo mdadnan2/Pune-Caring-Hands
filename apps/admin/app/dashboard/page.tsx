@@ -61,7 +61,7 @@ function DashboardPage() {
             <section className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
               {[
                 ['Total bookings', data.kpis.totalBookings],
-                ["Today's bookings", data.kpis.todaysBookings],
+                ["Today's appointments", data.kpis.todaysBookings],
                 ['Payment verification', data.kpis.pendingPaymentVerification],
                 ['Confirmed', data.kpis.confirmed],
                 ['Completed', data.kpis.completed],
