@@ -12,7 +12,7 @@ export function SiteFooter() {
         </div>
 
         <div>
-          <p className="font-semibold text-white">Quick links</p>
+          <p className="font-semibold text-white">Quick Links</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li><Link href="/services">Services</Link></li>
             <li><Link href="/about">About</Link></li>
@@ -25,7 +25,7 @@ export function SiteFooter() {
           <p className="font-semibold text-white">Support</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
             <li><Link href="/faqs">FAQs</Link></li>
-            <li><Link href="/testimonials">Testimonials</Link></li>
+            <li><Link href="/testimonials">Patient Testimonials</Link></li>
             <li><Link href="/privacy">Privacy</Link></li>
             <li><Link href="/terms">Terms</Link></li>
           </ul>

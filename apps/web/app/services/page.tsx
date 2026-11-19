@@ -5,7 +5,7 @@ export default function ServicesPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
       <div className="max-w-2xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Services</p>
+        <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Our Services</p>
         <h1 className="mt-2 text-4xl font-bold text-slate-900">Care at home, designed around your routine.</h1>
       </div>
 

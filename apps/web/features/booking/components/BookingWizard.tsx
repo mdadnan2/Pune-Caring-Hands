@@ -931,7 +931,7 @@ export default function BookingWizard() {
             className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white"
             disabled={isSubmitting}
           >
-             {isSubmitting ? 'Confirming your booking...' : 'Confirm Booking'}
+             {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}
           </button>
         )}
       </div>

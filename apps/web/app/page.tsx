@@ -29,11 +29,11 @@ export default function HomePage() {
             <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-slate-900">1.5k+</p>
-                <p className="text-sm text-slate-500">Patients served</p>
+                 <p className="text-sm text-slate-500">Patients Served</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">6</p>
-                <p className="text-sm text-slate-500">Core services</p>
+                 <p className="text-sm text-slate-500">Core Services</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">Pune</p>
@@ -44,7 +44,7 @@ export default function HomePage() {
 
           <div className="rounded-3xl bg-white p-6 shadow-lg shadow-slate-200 ring-1 ring-slate-200">
             <div className="rounded-2xl bg-navy-800 p-6 text-white">
-              <p className="text-sm uppercase tracking-[0.2em] text-slate-300">Popular service</p>
+              <p className="text-sm tracking-[0.2em] text-slate-300">Popular Service</p>
               <h2 className="mt-4 text-3xl font-bold">Doctor Home Consultation</h2>
               <p className="mt-3 text-slate-200">Immediate or scheduled visits for general care, check-ins, and recovery support.</p>
               <div className="mt-6 flex items-baseline gap-2">
@@ -69,11 +69,11 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-10 flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Services</p>
+            <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Our Services</p>
             <h2 className="mt-2 text-3xl font-bold text-slate-900">Healthcare services designed for everyday life</h2>
           </div>
-          <Link href="/services" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-             View All Services →
+           <Link href="/services" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
+             View All Services
           </Link>
         </div>
 
@@ -103,7 +103,7 @@ export default function HomePage() {
 
       <section className="bg-slate-100 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">How it works</p>
+          <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">How It Works</p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">A simple flow from booking to care</h2>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {[
@@ -124,7 +124,7 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Why choose us</p>
+        <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Why Choose Us</p>
         <h2 className="mt-2 text-3xl font-bold text-slate-900">Reliable, transparent, and patient-first</h2>
         <div className="mt-10 grid gap-6 md:grid-cols-4">
           {[
@@ -145,11 +145,11 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Testimonials</p>
+              <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Patient Testimonials</p>
               <h2 className="mt-2 text-3xl font-bold text-slate-900">Patients trust our care</h2>
             </div>
-            <Link href="/testimonials" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-               View Testimonials →
+             <Link href="/testimonials" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
+                View Testimonials
             </Link>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -165,7 +165,7 @@ export default function HomePage() {
 
       <section className="bg-slate-50 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Service areas</p>
+          <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Service Areas</p>
           <h2 className="mt-2 text-3xl font-bold text-slate-900">Pune coverage</h2>
           <div className="mt-8 flex flex-wrap gap-3">
             {serviceAreas.map((area) => (
@@ -181,7 +181,7 @@ export default function HomePage() {
         <div className="rounded-3xl bg-navy-800 p-8 text-white md:p-12">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-teal-300">Need help booking?</p>
+              <p className="text-sm tracking-[0.2em] text-teal-300">Need Help Booking?</p>
               <h2 className="mt-2 text-3xl font-bold">Start your care journey today.</h2>
             </div>
             <div className="flex flex-wrap gap-4">

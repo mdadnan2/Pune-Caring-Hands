@@ -172,7 +172,7 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
   return (
     <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+        <p className="text-sm font-semibold tracking-[0.18em] text-teal-700">
           Booking {booking.bookingRef}
         </p>
         <h1 className="mt-3 text-3xl font-bold text-slate-900">Payment</h1>

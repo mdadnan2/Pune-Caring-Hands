@@ -3,7 +3,7 @@ import { testimonials } from '../../lib/site-data';
 export default function TestimonialsPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">Testimonials</p>
+      <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Patient Testimonials</p>
       <h1 className="mt-2 text-4xl font-bold text-slate-900">Patients share their experience</h1>
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         {testimonials.map((item) => (

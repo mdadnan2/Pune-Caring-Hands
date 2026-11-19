@@ -1,7 +1,7 @@
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-      <p className="text-sm font-semibold uppercase tracking-[0.2em] text-teal-700">About</p>
+      <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">About Us</p>
       <h1 className="mt-3 text-4xl font-bold text-slate-900">Trustworthy home healthcare for Pune families.</h1>
       <div className="mt-8 space-y-5 text-lg text-slate-600">
         <p>
