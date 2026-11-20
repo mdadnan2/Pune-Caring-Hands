@@ -69,7 +69,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
         <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
-            <p className="text-sm font-semibold tracking-[0.12em] text-teal-700">Our Services</p>
+            <p className="text-sm font-semibold text-teal-700">Our Services</p>
             <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
               Healthcare services designed for everyday life
             </h2>
