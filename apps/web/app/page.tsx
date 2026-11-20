@@ -66,37 +66,54 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-10 flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Our Services</p>
-            <h2 className="mt-2 text-3xl font-bold text-slate-900">Healthcare services designed for everyday life</h2>
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+        <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold tracking-[0.12em] text-teal-700">Our Services</p>
+            <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              Healthcare services designed for everyday life
+            </h2>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+              Professional healthcare services delivered to your doorstep across Pune.
+            </p>
           </div>
-           <Link href="/services" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-             View All Services
+          <Link
+            href="/services"
+            className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-navy-700 transition hover:bg-navy-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+          >
+            View All Services
           </Link>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:gap-8">
           {services.map((service) => (
-            <div key={service.slug} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${service.accent}`}>
-                {service.price}
-              </div>
-              <h3 className="mt-5 text-xl font-semibold text-slate-900">{service.name}</h3>
-              <p className="mt-3 text-sm text-slate-600">{service.description}</p>
-              <ul className="mt-5 space-y-2 text-sm text-slate-600">
+            <article
+              key={service.slug}
+              className="flex h-full min-h-[380px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-8"
+            >
+              <h3 className="text-2xl font-semibold leading-tight text-slate-900">{service.name}</h3>
+              <p className="mt-4 text-base leading-relaxed text-slate-600">{service.description}</p>
+              <ul className="mt-6 space-y-2.5 text-sm leading-relaxed text-slate-700">
                 {service.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-teal-500" />
-                    {feature}
+                  <li key={feature} className="flex items-start gap-3">
+                    <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                    <span>{feature}</span>
                   </li>
                 ))}
               </ul>
-              <Link href={`/services/${service.slug}`} className="mt-6 inline-flex rounded-full bg-navy-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800">
-                 View Details
-              </Link>
-            </div>
+              <div className="mt-auto pt-8">
+                <p className="text-sm text-slate-500">
+                  {service.price.startsWith('₹') ? 'Starting from' : 'Pricing'}
+                </p>
+                <p className="mt-1 text-3xl font-bold text-navy-800">{service.price}</p>
+                <Link
+                  href={`/services/${service.slug}`}
+                  className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-navy-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:w-auto"
+                >
+                  Book This Service
+                </Link>
+              </div>
+            </article>
           ))}
         </div>
       </section>
