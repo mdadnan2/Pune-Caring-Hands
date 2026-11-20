@@ -118,75 +118,84 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-100 py-16">
+      <section className="bg-slate-100 py-16 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">How It Works</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">A simple flow from booking to care</h2>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <p className="text-sm font-semibold text-teal-700">How It Works</p>
+          <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">A simple flow from booking to care</h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-3 lg:gap-8">
             {[
               ['1', 'Choose service', 'Select the care you need and share your preferences.'],
               ['2', 'Confirm details', 'Add patient information, service details, and preferred time slot.'],
               ['3', 'Pay & verify', 'Submit UPI payment details and receive confirmation after review.'],
             ].map(([step, title, text]) => (
-              <div key={step} className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-navy-700 text-sm font-bold text-white">
+              <article key={step} className="flex h-full min-h-[220px] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-navy-700 text-sm font-bold text-white">
                   {step}
                 </div>
-                <h3 className="mt-5 text-xl font-semibold text-slate-900">{title}</h3>
-                <p className="mt-3 text-sm text-slate-600">{text}</p>
-              </div>
+                <h3 className="mt-6 text-xl font-semibold text-slate-900">{title}</h3>
+                <p className="mt-3 text-base leading-relaxed text-slate-600">{text}</p>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Why Choose Us</p>
-        <h2 className="mt-2 text-3xl font-bold text-slate-900">Reliable, transparent, and patient-first</h2>
-        <div className="mt-10 grid gap-6 md:grid-cols-4">
+      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+        <p className="text-sm font-semibold text-teal-700">Why Choose Us</p>
+        <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">Reliable, transparent, and patient-first</h2>
+        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
           {[
             ['Licensed professionals', 'Medical support from trusted, verified caregivers.'],
             ['Transparent pricing', 'Clear service pricing with no hidden surprise charges.'],
             ['Home-first care', 'Convenient appointments that respect your routine.'],
             ['Quick verification', 'Smooth UPI payment and admin confirmation flow.'],
           ].map(([title, text]) => (
-            <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-              <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-              <p className="mt-3 text-sm text-slate-600">{text}</p>
-            </div>
+            <article key={title} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <span aria-hidden="true" className="block h-2 w-10 rounded-full bg-teal-500" />
+              <h3 className="mt-6 text-xl font-semibold text-slate-900">{title}</h3>
+              <p className="mt-3 text-base leading-relaxed text-slate-600">{text}</p>
+            </article>
           ))}
         </div>
       </section>
 
-      <section className="bg-white py-16">
+      <section className="bg-white py-16 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-end justify-between gap-4">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Patient Testimonials</p>
-              <h2 className="mt-2 text-3xl font-bold text-slate-900">Patients trust our care</h2>
+              <p className="text-sm font-semibold text-teal-700">Patient Testimonials</p>
+              <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">Patients trust our care</h2>
             </div>
-             <Link href="/testimonials" className="hidden text-sm font-semibold text-navy-700 md:inline-flex">
-                View Testimonials
+            <Link
+              href="/testimonials"
+              className="inline-flex min-h-11 items-center rounded-full px-4 py-2 text-sm font-semibold text-navy-700 transition hover:bg-navy-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+            >
+              View Testimonials
             </Link>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="mt-10 grid gap-6 md:grid-cols-3 lg:gap-8">
             {testimonials.map((item) => (
-              <blockquote key={item.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                <p className="text-slate-700">“{item.quote}”</p>
-                <footer className="mt-5 text-sm font-semibold text-slate-900">{item.name}</footer>
+              <blockquote key={item.name} className="flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <p className="text-base leading-relaxed text-slate-700">“{item.quote}”</p>
+                <footer className="mt-auto border-t border-slate-100 pt-5 text-sm font-semibold text-slate-900">
+                  <cite className="not-italic">{item.name}</cite>
+                </footer>
               </blockquote>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="bg-slate-50 py-16">
+      <section className="bg-slate-50 py-16 sm:py-20 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Service Areas</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">Pune coverage</h2>
-          <div className="mt-8 flex flex-wrap gap-3">
+          <p className="text-sm font-semibold text-teal-700">Service Areas</p>
+          <h2 className="mt-3 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl lg:text-5xl">Pune coverage</h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            Providing home healthcare services across Pune.
+          </p>
+          <div className="mt-8 flex max-w-5xl flex-wrap gap-3">
             {serviceAreas.map((area) => (
-              <span key={area} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700">
+              <span key={area} className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm">
                 {area}
               </span>
             ))}
