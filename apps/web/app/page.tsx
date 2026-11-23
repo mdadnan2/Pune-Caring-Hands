@@ -16,10 +16,10 @@ export default function HomePage() {
               From doctor visits to diagnostics and medicine delivery, Pune Caring Hands helps you
               arrange healthcare services without leaving home.
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-nowrap gap-2 sm:gap-4">
               <Link
                 href="/book"
-                className="inline-flex items-center justify-center rounded-full bg-navy-700 px-6 py-3 text-base font-semibold text-white transition hover:bg-navy-800"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-full bg-navy-700 px-3 py-3 text-xs font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-6 sm:text-base"
               >
                 Book a Service
               </Link>
@@ -27,7 +27,7 @@ export default function HomePage() {
                 href="https://wa.me/+918605906083"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-6 py-3 text-base font-semibold text-slate-700 transition hover:bg-slate-100"
+                className="inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-emerald-500 px-3 py-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 sm:px-6 sm:text-base"
               >
                 Contact on WhatsApp
               </a>
