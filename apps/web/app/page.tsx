@@ -5,7 +5,7 @@ import { serviceAreas, services, testimonials } from '../lib/site-data';
 
 export default function HomePage() {
   return (
-    <main>
+    <div>
       <section className="bg-slate-50">
         <div className="mx-auto grid max-w-7xl items-start gap-12 px-4 pt-4 pb-14 sm:px-6 sm:pt-6 sm:pb-16 lg:grid-cols-2 lg:px-8 lg:pt-8 lg:pb-20">
           <div>
@@ -261,6 +261,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

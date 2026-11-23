@@ -159,18 +159,18 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
 
   if (isLoading) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16" role="status">
+      <div className="mx-auto max-w-3xl px-4 py-16" role="status">
         Loading payment details...
-      </main>
+      </div>
     );
   }
   if (!booking) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-16">
+      <div className="mx-auto max-w-3xl px-4 py-16">
         <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">
           {error || 'Booking not found.'}
         </p>
-      </main>
+      </div>
     );
   }
 
@@ -179,7 +179,7 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
     booking.status === 'PAYMENT_VERIFICATION' || booking.payment?.status === 'SUBMITTED';
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <p className="text-sm font-semibold tracking-[0.18em] text-teal-700">
           Booking {booking.bookingRef}
@@ -295,6 +295,6 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
           </>
         )}
       </section>
-    </main>
+    </div>
   );
 }
