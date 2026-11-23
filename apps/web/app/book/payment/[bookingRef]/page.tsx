@@ -2,6 +2,7 @@
 
 import { UPLOAD_ALLOWED_MIME_TYPES, UPLOAD_MAX_FILE_SIZE_BYTES } from '@pch/shared';
 import QRCode from 'qrcode';
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { getBookingByRef, getPaymentInstructions, submitPaymentProof } from '../../../../lib/api';
 import type { BookingRecord, PaymentInstructions } from '../../../../lib/api';
@@ -234,9 +235,12 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
             ) : null}
             <div className="mt-7 grid gap-6 sm:grid-cols-[240px_1fr] sm:items-center">
               {qrCode ? (
-                <img
+                <Image
                   src={qrCode}
                   alt="UPI payment QR code"
+                  width={240}
+                  height={240}
+                  unoptimized
                   className="h-60 w-60 rounded-xl border p-2"
                 />
               ) : (
