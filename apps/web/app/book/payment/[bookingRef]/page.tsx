@@ -44,7 +44,9 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError instanceof Error ? loadError.message : 'Could not load payment details.');
+          setError(
+            loadError instanceof Error ? loadError.message : 'Could not load payment details.',
+          );
         }
       } finally {
         if (!cancelled) setIsLoading(false);
@@ -67,7 +69,8 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
         if (!cancelled) setQrCode(dataUrl);
       })
       .catch(() => {
-        if (!cancelled) setError('Could not generate the UPI QR code. You can still use the UPI ID below.');
+        if (!cancelled)
+          setError('Could not generate the UPI QR code. You can still use the UPI ID below.');
       });
     return () => {
       cancelled = true;
@@ -155,12 +158,18 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
   };
 
   if (isLoading) {
-    return <main className="mx-auto max-w-3xl px-4 py-16">Loading payment details...</main>;
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-16" role="status">
+        Loading payment details...
+      </main>
+    );
   }
   if (!booking) {
     return (
       <main className="mx-auto max-w-3xl px-4 py-16">
-        <p className="rounded-xl bg-red-50 p-4 text-red-700">{error || 'Booking not found.'}</p>
+        <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">
+          {error || 'Booking not found.'}
+        </p>
       </main>
     );
   }
@@ -182,17 +191,18 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
         </p>
 
         {confirmed ? (
-          <div className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
+          <div role="status" className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-5">
             <h2 className="font-semibold text-green-900">Confirmed</h2>
             <p className="mt-1 text-sm text-green-800">
               Your payment was verified by our team and your booking is confirmed.
             </p>
           </div>
         ) : verificationPending ? (
-          <div className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
+          <div role="status" className="mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-5">
             <h2 className="font-semibold text-blue-900">Verification Pending</h2>
             <p className="mt-1 text-sm text-blue-800">
-              We received your payment proof. Your booking is not confirmed until our team verifies the payment.
+              We received your payment proof. Your booking is not confirmed until our team verifies
+              the payment.
             </p>
             <button
               type="button"
@@ -200,16 +210,21 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
               disabled={isRefreshing}
               className="mt-3 text-sm font-semibold text-blue-900 underline disabled:opacity-50"
             >
-               {isRefreshing ? 'Refreshing...' : 'Refresh Payment Status'}
+              {isRefreshing ? 'Refreshing...' : 'Refresh Payment Status'}
             </button>
-            {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
+            {error ? (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                {error}
+              </p>
+            ) : null}
           </div>
         ) : (
           <>
             <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
               <h2 className="font-semibold text-amber-900">Pending Payment</h2>
               <p className="mt-1 text-sm text-amber-800">
-                Pay the amount shown, then upload your payment screenshot. Confirmation happens only after admin verification.
+                Pay the amount shown, then upload your payment screenshot. Confirmation happens only
+                after admin verification.
               </p>
             </div>
             {booking.payment?.rejectionReason ? (
@@ -219,17 +234,29 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
             ) : null}
             <div className="mt-7 grid gap-6 sm:grid-cols-[240px_1fr] sm:items-center">
               {qrCode ? (
-                <img src={qrCode} alt="UPI payment QR code" className="h-60 w-60 rounded-xl border p-2" />
+                <img
+                  src={qrCode}
+                  alt="UPI payment QR code"
+                  className="h-60 w-60 rounded-xl border p-2"
+                />
               ) : (
                 <div className="flex h-60 w-60 items-center justify-center rounded-xl border bg-slate-50 text-center text-sm text-slate-500">
                   Loading UPI QR...
                 </div>
               )}
               <div className="space-y-3 text-sm text-slate-700">
-                <p>Payee: <strong>{instructions?.payeeName}</strong></p>
-                <p>UPI ID: <strong>{instructions?.upiId}</strong></p>
-                <p>Amount: <strong>₹{paymentAmount.toLocaleString('en-IN')}</strong></p>
-                <p>Reference: <strong>{booking.bookingRef}</strong></p>
+                <p>
+                  Payee: <strong>{instructions?.payeeName}</strong>
+                </p>
+                <p>
+                  UPI ID: <strong>{instructions?.upiId}</strong>
+                </p>
+                <p>
+                  Amount: <strong>₹{paymentAmount.toLocaleString('en-IN')}</strong>
+                </p>
+                <p>
+                  Reference: <strong>{booking.bookingRef}</strong>
+                </p>
               </div>
             </div>
             <label className="mt-8 block space-y-2 text-sm font-medium text-slate-700">
@@ -247,15 +274,23 @@ export default function BookingPaymentPage({ params }: { params: { bookingRef: s
                 JPEG, PNG, or PDF. Maximum 5MB.
               </span>
             </label>
-            {error ? <p className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</p> : null}
-            {notice ? <p className="mt-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">{notice}</p> : null}
+            {error ? (
+              <p role="alert" className="mt-4 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </p>
+            ) : null}
+            {notice ? (
+              <p role="status" className="mt-4 rounded-xl bg-green-50 p-4 text-sm text-green-700">
+                {notice}
+              </p>
+            ) : null}
             <button
               type="button"
               onClick={() => void uploadProof()}
               disabled={isSubmitting}
               className="mt-6 rounded-full bg-navy-700 px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
             >
-               {isSubmitting ? 'Uploading Proof...' : 'Upload Payment Proof'}
+              {isSubmitting ? 'Uploading Proof...' : 'Upload Payment Proof'}
             </button>
           </>
         )}

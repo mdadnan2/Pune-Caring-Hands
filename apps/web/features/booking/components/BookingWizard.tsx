@@ -93,6 +93,7 @@ export default function BookingWizard() {
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');
+  const [servicesLoadAttempt, setServicesLoadAttempt] = useState(0);
 
   const form = useForm<BookingWizardValues>({
     resolver: zodResolver(bookingWizardSchema),
@@ -146,7 +147,7 @@ export default function BookingWizard() {
     return () => {
       cancelled = true;
     };
-  }, [form]);
+  }, [form, servicesLoadAttempt]);
 
   useEffect(() => {
     const currentService = selectedService;
@@ -367,7 +368,42 @@ export default function BookingWizard() {
 
   const renderServiceStep = () => {
     if (isLoadingServices) {
-      return <p className="text-sm text-slate-600">Loading services...</p>;
+      return (
+        <p role="status" className="text-sm text-slate-600">
+          Loading available services...
+        </p>
+      );
+    }
+
+    if (apiError && !services.length) {
+      return (
+        <div
+          role="alert"
+          className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"
+        >
+          <p>{apiError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setApiError('');
+              setIsLoadingServices(true);
+              setServicesLoadAttempt((attempt) => attempt + 1);
+            }}
+            className="mt-4 min-h-11 rounded-full bg-navy-700 px-4 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+          >
+            Try again
+          </button>
+        </div>
+      );
+    }
+
+    if (!services.length) {
+      return (
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
+          <p>No services are available for online booking right now.</p>
+          <p className="mt-1">Please contact our care team for help arranging a visit.</p>
+        </div>
+      );
     }
 
     return (
@@ -394,11 +430,12 @@ export default function BookingWizard() {
               form.setValue('serviceSlug', service.slug, { shouldValidate: true });
               setApiError('');
             }}
-            className={`rounded-2xl border p-5 text-left transition ${
+            className={`rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
               selectedServiceId === service.id
                 ? 'border-navy-700 bg-navy-50 shadow-sm'
                 : 'border-slate-200 bg-white hover:border-slate-300'
             }`}
+            aria-pressed={selectedServiceId === service.id}
           >
             <p className="text-sm font-semibold text-teal-700">
               {service.basePrice !== null
@@ -419,10 +456,15 @@ export default function BookingWizard() {
         Full name
         <input
           {...form.register('patientName')}
+          id="patient-name"
+          aria-invalid={form.formState.errors.patientName ? 'true' : 'false'}
+          aria-describedby={form.formState.errors.patientName ? 'patient-name-error' : undefined}
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
         />
         {form.formState.errors.patientName ? (
-          <span className="text-xs text-red-600">{form.formState.errors.patientName.message}</span>
+          <span id="patient-name-error" className="text-xs text-red-600">
+            {form.formState.errors.patientName.message}
+          </span>
         ) : null}
       </label>
 
@@ -451,11 +493,16 @@ export default function BookingWizard() {
         Mobile
         <input
           {...form.register('patientPhone')}
+          id="patient-phone"
+          aria-invalid={form.formState.errors.patientPhone ? 'true' : 'false'}
+          aria-describedby={form.formState.errors.patientPhone ? 'patient-phone-error' : undefined}
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
           placeholder="9876543210"
         />
         {form.formState.errors.patientPhone ? (
-          <span className="text-xs text-red-600">{form.formState.errors.patientPhone.message}</span>
+          <span id="patient-phone-error" className="text-xs text-red-600">
+            {form.formState.errors.patientPhone.message}
+          </span>
         ) : null}
       </label>
 
@@ -481,11 +528,16 @@ export default function BookingWizard() {
         Complete address
         <textarea
           {...form.register('patientAddress')}
+          id="patient-address"
+          aria-invalid={form.formState.errors.patientAddress ? 'true' : 'false'}
+          aria-describedby={
+            form.formState.errors.patientAddress ? 'patient-address-error' : undefined
+          }
           className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
           placeholder="House no, street, area, city"
         />
         {form.formState.errors.patientAddress ? (
-          <span className="text-xs text-red-600">
+          <span id="patient-address-error" className="text-xs text-red-600">
             {form.formState.errors.patientAddress.message}
           </span>
         ) : null}
@@ -495,11 +547,16 @@ export default function BookingWizard() {
         PIN code
         <input
           {...form.register('patientPinCode')}
+          id="patient-pin-code"
+          aria-invalid={form.formState.errors.patientPinCode ? 'true' : 'false'}
+          aria-describedby={
+            form.formState.errors.patientPinCode ? 'patient-pin-code-error' : undefined
+          }
           className="w-full rounded-xl border border-slate-300 px-4 py-2.5"
           placeholder="411001"
         />
         {form.formState.errors.patientPinCode ? (
-          <span className="text-xs text-red-600">
+          <span id="patient-pin-code-error" className="text-xs text-red-600">
             {form.formState.errors.patientPinCode.message}
           </span>
         ) : null}
@@ -531,7 +588,8 @@ export default function BookingWizard() {
                 form.setValue('appointmentType', 'IMMEDIATE');
                 form.setValue('slotId', '');
               }}
-              className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'IMMEDIATE' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${appointmentType === 'IMMEDIATE' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
+              aria-pressed={appointmentType === 'IMMEDIATE'}
             >
               Request Immediate Visit
             </button>
@@ -541,7 +599,8 @@ export default function BookingWizard() {
                 form.setValue('appointmentType', 'SCHEDULED');
                 form.setValue('slotId', '');
               }}
-              className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'SCHEDULED' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
+              className={`rounded-xl px-4 py-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${appointmentType === 'SCHEDULED' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
+              aria-pressed={appointmentType === 'SCHEDULED'}
             >
               Schedule Appointment
             </button>
@@ -551,11 +610,16 @@ export default function BookingWizard() {
             Main complaint
             <textarea
               {...form.register('chiefComplaint')}
+              id="chief-complaint"
+              aria-invalid={form.formState.errors.chiefComplaint ? 'true' : 'false'}
+              aria-describedby={
+                form.formState.errors.chiefComplaint ? 'chief-complaint-error' : undefined
+              }
               className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
               placeholder="Describe the issue"
             />
             {form.formState.errors.chiefComplaint ? (
-              <span className="text-xs text-red-600">
+              <span id="chief-complaint-error" className="text-xs text-red-600">
                 {form.formState.errors.chiefComplaint.message}
               </span>
             ) : null}
@@ -643,9 +707,10 @@ export default function BookingWizard() {
                       : [...selectedItemIds, item.id];
                     form.setValue('serviceItemIds', next, { shouldValidate: true });
                   }}
-                  className={`rounded-xl border p-4 text-left ${
+                  className={`rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
                     checked ? 'border-navy-700 bg-navy-50' : 'border-slate-200 bg-white'
                   }`}
+                  aria-pressed={checked}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold text-slate-900">{item.name}</span>
@@ -658,7 +723,9 @@ export default function BookingWizard() {
             })}
           </div>
           {form.formState.errors.serviceItemIds ? (
-            <p className="text-sm text-red-600">{form.formState.errors.serviceItemIds.message}</p>
+            <p id="service-items-error" role="alert" className="text-sm text-red-600">
+              {form.formState.errors.serviceItemIds.message}
+            </p>
           ) : null}
         </div>
       );
@@ -674,11 +741,12 @@ export default function BookingWizard() {
                 key={item.id}
                 type="button"
                 onClick={() => form.setValue('serviceItemIds', [item.id], { shouldValidate: true })}
-                className={`rounded-xl border p-4 text-left ${
+                className={`rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
                   selectedItemIds.includes(item.id)
                     ? 'border-navy-700 bg-navy-50'
                     : 'border-slate-200 bg-white'
                 }`}
+                aria-pressed={selectedItemIds.includes(item.id)}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="font-semibold text-slate-900">{item.name}</span>
@@ -690,7 +758,9 @@ export default function BookingWizard() {
             ))}
           </div>
           {form.formState.errors.serviceItemIds ? (
-            <p className="text-sm text-red-600">{form.formState.errors.serviceItemIds.message}</p>
+            <p id="service-items-error" role="alert" className="text-sm text-red-600">
+              {form.formState.errors.serviceItemIds.message}
+            </p>
           ) : null}
         </div>
       );
@@ -704,6 +774,11 @@ export default function BookingWizard() {
             <input
               key={selectedServiceId}
               type="file"
+              id="prescription"
+              aria-invalid={form.formState.errors.prescription ? 'true' : 'false'}
+              aria-describedby={
+                form.formState.errors.prescription ? 'prescription-error' : undefined
+              }
               accept={UPLOAD_ALLOWED_MIME_TYPES.join(',')}
               onChange={(event) => {
                 form.setValue('prescription', event.target.files?.[0], { shouldValidate: true });
@@ -715,7 +790,7 @@ export default function BookingWizard() {
               JPEG, PNG, or PDF. Maximum 5MB.
             </span>
             {form.formState.errors.prescription ? (
-              <span className="text-xs text-red-600">
+              <span id="prescription-error" className="text-xs text-red-600">
                 {form.formState.errors.prescription.message}
               </span>
             ) : null}
@@ -743,11 +818,16 @@ export default function BookingWizard() {
             Reason for consultation
             <textarea
               {...form.register('chiefComplaint')}
+              id="online-chief-complaint"
+              aria-invalid={form.formState.errors.chiefComplaint ? 'true' : 'false'}
+              aria-describedby={
+                form.formState.errors.chiefComplaint ? 'online-chief-complaint-error' : undefined
+              }
               className="min-h-24 w-full rounded-xl border border-slate-300 px-4 py-2.5"
               placeholder="Describe the concern"
             />
             {form.formState.errors.chiefComplaint ? (
-              <span className="text-xs text-red-600">
+              <span id="online-chief-complaint-error" className="text-xs text-red-600">
                 {form.formState.errors.chiefComplaint.message}
               </span>
             ) : null}
@@ -807,11 +887,12 @@ export default function BookingWizard() {
                 key={slot.id}
                 type="button"
                 onClick={() => form.setValue('slotId', slot.id, { shouldValidate: true })}
-                className={`rounded-xl border p-4 text-left ${
+                className={`rounded-xl border p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
                   form.watch('slotId') === slot.id
                     ? 'border-navy-700 bg-navy-50'
                     : 'border-slate-200 bg-white'
                 }`}
+                aria-pressed={form.watch('slotId') === slot.id}
               >
                 <p className="font-semibold text-slate-900">
                   {new Date(slot.date).toLocaleDateString('en-IN', {
@@ -886,23 +967,29 @@ export default function BookingWizard() {
 
   return (
     <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
-      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-100 pb-6">
+      <nav
+        aria-label="Booking progress"
+        className="mb-8 flex flex-wrap gap-2 border-b border-slate-100 pb-6"
+      >
         {stepTitles.map((title, index) => (
           <div
             key={title}
             className={`rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
               index === step ? 'bg-navy-700 text-white' : 'bg-slate-100 text-slate-600'
             }`}
+            aria-current={index === step ? 'step' : undefined}
           >
             {index + 1}. {title}
           </div>
         ))}
-      </div>
+      </nav>
 
       {content}
 
       {apiError ? (
-        <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{apiError}</p>
+        <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+          {apiError}
+        </p>
       ) : null}
 
       <div className="mt-8 flex items-center justify-between gap-3 border-t border-slate-100 pt-6">
@@ -922,7 +1009,7 @@ export default function BookingWizard() {
               void nextStep();
             }}
             className="min-h-11 rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (step === 0 && (isLoadingServices || !services.length))}
           >
             Continue
           </button>
