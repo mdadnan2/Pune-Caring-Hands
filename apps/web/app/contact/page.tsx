@@ -3,7 +3,7 @@ export default function ContactPage() {
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
       <p className="text-sm font-semibold text-teal-700">Contact Us</p>
       <h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
-        Need help or a quick consultation?
+        Need help or a consultation?
       </h1>
       <div className="mt-8 grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

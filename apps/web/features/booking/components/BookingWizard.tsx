@@ -667,8 +667,7 @@ export default function BookingWizard() {
       return (
         <div className="space-y-5">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-            We will coordinate the ECG visit detail and ensure a qualified technician is scheduled
-            for your preferred time.
+            We will coordinate the ECG visit details for your preferred time.
           </div>
           <label className="block space-y-2 text-sm font-medium text-slate-700">
             Reason for ECG / concern

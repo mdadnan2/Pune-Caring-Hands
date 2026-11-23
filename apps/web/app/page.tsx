@@ -13,8 +13,8 @@ export default function HomePage() {
               Compassionate care brought to your home.
             </h1>
             <p className="mt-6 max-w-xl text-lg text-slate-600">
-              From doctor visits to diagnostics and medicine delivery, Pune Caring Hands makes it
-              easier to access quality care without leaving home.
+              From doctor visits to diagnostics and medicine delivery, Pune Caring Hands helps you
+              arrange healthcare services without leaving home.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
@@ -34,8 +34,8 @@ export default function HomePage() {
             </div>
             <div className="mt-10 grid max-w-md grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-2xl font-bold text-slate-900">1.5k+</p>
-                <p className="text-sm text-slate-500">Patients Served</p>
+                <p className="text-2xl font-bold text-slate-900">Care</p>
+                <p className="text-sm text-slate-500">At home</p>
               </div>
               <div>
                 <p className="text-2xl font-bold text-slate-900">6</p>
@@ -50,7 +50,7 @@ export default function HomePage() {
 
           <div className="rounded-3xl bg-white p-6 shadow-lg shadow-slate-200 ring-1 ring-slate-200">
             <div className="rounded-2xl bg-navy-800 p-6 text-white">
-              <p className="text-sm tracking-[0.2em] text-slate-300">Popular Service</p>
+              <p className="text-sm tracking-[0.2em] text-slate-300">Featured Service</p>
               <h2 className="mt-4 text-3xl font-bold">Doctor Home Consultation</h2>
               <p className="mt-3 text-slate-200">
                 Immediate or scheduled visits for general care, check-ins, and recovery support.
@@ -62,8 +62,8 @@ export default function HomePage() {
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm text-slate-500">Fast response</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">Same-day slots</p>
+                <p className="text-sm text-slate-500">Booking options</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">Immediate or scheduled</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                 <p className="text-sm text-slate-500">Coverage</p>
@@ -137,13 +137,13 @@ export default function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
-        <SectionHeading eyebrow="Why Choose Us" title="Reliable, transparent, and patient-first" />
+        <SectionHeading eyebrow="Care Information" title="Clear options for care at home" />
         <div className="mt-10 grid gap-x-8 gap-y-7 md:grid-cols-2 lg:grid-cols-4">
           {[
-            ['Licensed professionals', 'Medical support from trusted, verified caregivers.'],
-            ['Transparent pricing', 'Clear service pricing with no hidden surprise charges.'],
-            ['Home-first care', 'Convenient appointments that respect your routine.'],
-            ['Quick verification', 'Smooth UPI payment and admin confirmation flow.'],
+            ['Home healthcare support', 'Explore services that can be arranged for care at home.'],
+            ['Clear booking details', 'Review service information and pricing in the booking flow.'],
+            ['Care at home', 'Share patient details and preferences for the requested service.'],
+            ['Payment verification', 'Upload UPI payment proof for review by our team.'],
           ].map(([title, text]) => (
             <article key={title} className="border-t border-slate-200 pt-5">
               <span aria-hidden="true" className="block h-1.5 w-8 rounded-full bg-teal-500" />
@@ -160,7 +160,7 @@ export default function HomePage() {
             <div>
               <p className="text-sm font-semibold text-teal-700">Patient Testimonials</p>
               <h2 className="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
-                Patients trust our care
+                What patients have shared
               </h2>
             </div>
             <Link
@@ -254,9 +254,9 @@ export default function HomePage() {
             </p>
           </div>
           <div className="rounded-2xl bg-slate-50 p-6">
-            <h3 className="text-lg font-semibold text-slate-900">Need urgent support?</h3>
+            <h3 className="text-lg font-semibold text-slate-900">Need help booking?</h3>
             <p className="mt-2 text-sm text-slate-600">
-              Use WhatsApp for quick coordination and immediate assistance.
+              Use WhatsApp to coordinate with our care team.
             </p>
           </div>
         </div>

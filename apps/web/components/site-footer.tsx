@@ -7,7 +7,7 @@ export function SiteFooter() {
         <div>
           <p className="text-xl font-semibold text-white">Pune Caring Hands</p>
           <p className="mt-4 text-sm text-slate-300">
-            Trusted home healthcare for comfort, safety, and timely support across Pune.
+            Home healthcare information, booking, and payment support across Pune.
           </p>
         </div>
 
