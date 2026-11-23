@@ -14,20 +14,52 @@ export function SiteFooter() {
         <div>
           <p className="font-semibold text-white">Quick Links</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
-            <li><Link href="/services">Services</Link></li>
-            <li><Link href="/about">About</Link></li>
-            <li><Link href="/service-areas">Service Areas</Link></li>
-            <li><Link href="/contact">Contact</Link></li>
+            <li>
+              <Link className="hover:text-white" href="/services">
+                Services
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/about">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/service-areas">
+                Service Areas
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/contact">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
 
         <div>
           <p className="font-semibold text-white">Support</p>
           <ul className="mt-4 space-y-2 text-sm text-slate-300">
-            <li><Link href="/faqs">FAQs</Link></li>
-            <li><Link href="/testimonials">Patient Testimonials</Link></li>
-            <li><Link href="/privacy">Privacy</Link></li>
-            <li><Link href="/terms">Terms</Link></li>
+            <li>
+              <Link className="hover:text-white" href="/faqs">
+                FAQs
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/testimonials">
+                Patient Testimonials
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/privacy">
+                Privacy
+              </Link>
+            </li>
+            <li>
+              <Link className="hover:text-white" href="/terms">
+                Terms
+              </Link>
+            </li>
           </ul>
         </div>
 

@@ -2,15 +2,22 @@ import { serviceAreas } from '../../lib/site-data';
 
 export default function ServiceAreasPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-      <p className="text-sm font-semibold tracking-[0.2em] text-teal-700">Service Areas</p>
-      <h1 className="mt-2 text-4xl font-bold text-slate-900">Care across Pune</h1>
-      <div className="mt-8 grid gap-4 md:grid-cols-2">
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+      <p className="text-sm font-semibold text-teal-700">Service Areas</p>
+      <h1 className="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
+        Home healthcare across Pune
+      </h1>
+      <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
+        Supporting patients and families across our active Pune service areas.
+      </p>
+      <div className="mt-8 flex flex-wrap gap-3">
         {serviceAreas.map((area) => (
-          <div key={area} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">{area}</h2>
-            <p className="mt-2 text-sm text-slate-600">Home healthcare support available in this area.</p>
-          </div>
+          <span
+            key={area}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700"
+          >
+            {area}
+          </span>
         ))}
       </div>
     </div>

@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import AdminAuth from '../../components/AdminAuth';
 import {
   createAdminSlot,
@@ -14,7 +14,9 @@ import {
 } from '../../lib/api';
 import {
   currentPuneDate,
+  formatTime12,
   isFuturePuneSlot,
+  parseTime12,
   slotFormSchema,
   type SlotFormValues,
 } from '../../features/slots/schemas/slot.schema';
@@ -243,22 +245,44 @@ function SlotManagement() {
                   {form.formState.errors.date ? <span className="text-xs text-red-600">{form.formState.errors.date.message}</span> : null}
                 </label>
                 <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                  Start time
-                  <input
-                    type="time"
-                    readOnly={Boolean(editingSlot?.booking)}
-                    {...form.register('startTime')}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5"
+                  Start time (12-hour)
+                  <Controller
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        inputMode="text"
+                        autoCapitalize="characters"
+                        placeholder="02:30 PM"
+                        readOnly={Boolean(editingSlot?.booking)}
+                        value={formatTime12(field.value)}
+                        onChange={(event) => field.onChange(parseTime12(event.target.value) ?? event.target.value)}
+                        onBlur={field.onBlur}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5"
+                      />
+                    )}
                   />
                   {form.formState.errors.startTime ? <span className="text-xs text-red-600">{form.formState.errors.startTime.message}</span> : null}
                 </label>
                 <label className="block space-y-1.5 text-sm font-medium text-slate-700">
-                  End time
-                  <input
-                    type="time"
-                    readOnly={Boolean(editingSlot?.booking)}
-                    {...form.register('endTime')}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5"
+                  End time (12-hour)
+                  <Controller
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <input
+                        type="text"
+                        inputMode="text"
+                        autoCapitalize="characters"
+                        placeholder="05:30 PM"
+                        readOnly={Boolean(editingSlot?.booking)}
+                        value={formatTime12(field.value)}
+                        onChange={(event) => field.onChange(parseTime12(event.target.value) ?? event.target.value)}
+                        onBlur={field.onBlur}
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5"
+                      />
+                    )}
                   />
                   {form.formState.errors.endTime ? <span className="text-xs text-red-600">{form.formState.errors.endTime.message}</span> : null}
                 </label>

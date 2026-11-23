@@ -524,7 +524,7 @@ export default function BookingWizard() {
     if (slug === 'doctor-home-consultation') {
       return (
         <div className="space-y-5">
-           <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
               onClick={() => {
@@ -533,7 +533,7 @@ export default function BookingWizard() {
               }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'IMMEDIATE' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
-               Request Immediate Visit
+              Request Immediate Visit
             </button>
             <button
               type="button"
@@ -543,7 +543,7 @@ export default function BookingWizard() {
               }}
               className={`rounded-xl px-4 py-2.5 text-sm font-semibold ${appointmentType === 'SCHEDULED' ? 'bg-navy-700 text-white' : 'border border-slate-300 bg-white text-slate-700'}`}
             >
-               Schedule Appointment
+              Schedule Appointment
             </button>
           </div>
 
@@ -857,7 +857,9 @@ export default function BookingWizard() {
           <div>
             <p className="text-sm text-slate-500">Appointment</p>
             <p className="font-medium text-slate-900">
-               {appointmentType === 'IMMEDIATE' ? 'Immediate Visit Request' : 'Scheduled Appointment'}
+              {appointmentType === 'IMMEDIATE'
+                ? 'Immediate Visit Request'
+                : 'Scheduled Appointment'}
             </p>
           </div>
           <div>
@@ -883,12 +885,12 @@ export default function BookingWizard() {
             : renderReviewStep();
 
   return (
-    <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-      <div className="mb-8 flex flex-wrap gap-2">
+    <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-100 pb-6">
         {stepTitles.map((title, index) => (
           <div
             key={title}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium ${
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
               index === step ? 'bg-navy-700 text-white' : 'bg-slate-100 text-slate-600'
             }`}
           >
@@ -903,12 +905,12 @@ export default function BookingWizard() {
         <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{apiError}</p>
       ) : null}
 
-      <div className="mt-8 flex items-center justify-between">
+      <div className="mt-8 flex items-center justify-between gap-3 border-t border-slate-100 pt-6">
         <button
           type="button"
           onClick={() => setStep((current) => Math.max(0, current - 1))}
           disabled={step === 0}
-          className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-11 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Previous
         </button>
@@ -919,7 +921,7 @@ export default function BookingWizard() {
             onClick={() => {
               void nextStep();
             }}
-            className="rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white"
+            className="min-h-11 rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
             disabled={isSubmitting}
           >
             Continue
@@ -928,10 +930,10 @@ export default function BookingWizard() {
           <button
             type="button"
             onClick={() => void form.handleSubmit(onSubmit)()}
-            className="rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white"
+            className="min-h-11 rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
             disabled={isSubmitting}
           >
-             {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}
+            {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}
           </button>
         )}
       </div>
