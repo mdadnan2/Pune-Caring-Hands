@@ -35,12 +35,12 @@ export function SiteHeader() {
             P
           </div>
           <div>
-            <p className="text-lg font-semibold text-slate-900">Pune Caring Hands</p>
-            <p className="text-xs text-slate-500">Home healthcare</p>
+            <p className="text-sm font-semibold text-slate-900 sm:text-lg">Pune Caring Hands</p>
+            <p className="hidden text-xs text-slate-500 sm:block">Home healthcare</p>
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -52,24 +52,26 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <a
             href="https://wa.me/+918605906083"
             target="_blank"
             rel="noreferrer"
-            className="hidden min-h-11 rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 sm:inline-flex sm:items-center"
+            className="hidden min-h-11 rounded-full border border-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 lg:inline-flex lg:items-center"
           >
             Contact on WhatsApp
           </a>
           <Link
             href="/book"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+            aria-label="Book a Service"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-navy-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-5"
           >
-            Book a Service
+            <span className="sm:hidden">Book</span>
+            <span className="hidden sm:inline">Book a Service</span>
           </Link>
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-slate-300 px-2 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 md:hidden"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-slate-300 px-2 text-sm font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 lg:hidden"
             aria-expanded={isMenuOpen}
             aria-controls="mobile-navigation"
             aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
@@ -83,7 +85,7 @@ export function SiteHeader() {
         <nav
           id="mobile-navigation"
           aria-label="Mobile navigation"
-          className="border-t border-slate-100 bg-white px-4 py-3 md:hidden"
+          className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden"
         >
           <div className="mx-auto grid max-w-7xl gap-1">
             {navItems.map((item) => (
