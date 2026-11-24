@@ -407,7 +407,7 @@ export default function BookingWizard() {
     }
 
     return (
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid min-w-0 max-w-full gap-4 md:grid-cols-2">
         {services.map((service) => (
           <button
             key={service.id}
@@ -430,7 +430,7 @@ export default function BookingWizard() {
               form.setValue('serviceSlug', service.slug, { shouldValidate: true });
               setApiError('');
             }}
-            className={`rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
+            className={`w-full min-w-0 max-w-full rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
               selectedServiceId === service.id
                 ? 'border-navy-700 bg-navy-50 shadow-sm'
                 : 'border-slate-200 bg-white hover:border-slate-300'
@@ -442,7 +442,7 @@ export default function BookingWizard() {
                 ? `₹${service.basePrice.toLocaleString('en-IN')}`
                 : 'Price varies'}
             </p>
-            <h3 className="mt-3 text-lg font-semibold text-slate-900">{service.name}</h3>
+            <h3 className="mt-3 break-words text-lg font-semibold text-slate-900">{service.name}</h3>
             <p className="mt-2 text-sm text-slate-600">{service.description}</p>
           </button>
         ))}
@@ -451,7 +451,7 @@ export default function BookingWizard() {
   };
 
   const renderPatientStep = () => (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid min-w-0 gap-4 md:grid-cols-2">
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Full name
         <input
@@ -625,7 +625,7 @@ export default function BookingWizard() {
             ) : null}
           </label>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid min-w-0 gap-4 md:grid-cols-2">
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Symptom duration
               <input
@@ -693,7 +693,7 @@ export default function BookingWizard() {
       return (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">Select one or more blood tests.</p>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid min-w-0 gap-3 md:grid-cols-2">
             {selectedServiceItems.map((item) => {
               const checked = selectedItemIds.includes(item.id);
               return (
@@ -711,9 +711,9 @@ export default function BookingWizard() {
                   }`}
                   aria-pressed={checked}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold text-slate-900">{item.name}</span>
-                    <span className="text-sm text-teal-700">
+                  <div className="flex min-w-0 items-center justify-between gap-3">
+                    <span className="min-w-0 break-words font-semibold text-slate-900">{item.name}</span>
+                    <span className="shrink-0 text-sm text-teal-700">
                       ₹{item.price.toLocaleString('en-IN')}
                     </span>
                   </div>
@@ -734,7 +734,7 @@ export default function BookingWizard() {
       return (
         <div className="space-y-4">
           <p className="text-sm text-slate-600">Choose the X-Ray type.</p>
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid min-w-0 gap-3 md:grid-cols-2">
             {selectedServiceItems.map((item) => (
               <button
                 key={item.id}
@@ -747,9 +747,9 @@ export default function BookingWizard() {
                 }`}
                 aria-pressed={selectedItemIds.includes(item.id)}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="font-semibold text-slate-900">{item.name}</span>
-                  <span className="text-sm text-teal-700">
+                <div className="flex min-w-0 items-center justify-between gap-3">
+                  <span className="min-w-0 break-words font-semibold text-slate-900">{item.name}</span>
+                  <span className="shrink-0 text-sm text-teal-700">
                     ₹{item.price.toLocaleString('en-IN')}
                   </span>
                 </div>
@@ -880,7 +880,7 @@ export default function BookingWizard() {
             No available slots on this date. Please choose another date.
           </p>
         ) : (
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid min-w-0 gap-3 md:grid-cols-2">
             {slots.map((slot) => (
               <button
                 key={slot.id}
@@ -921,7 +921,7 @@ export default function BookingWizard() {
           <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedService.name}</h3>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid min-w-0 gap-4 md:grid-cols-2">
           <div>
             <p className="text-sm text-slate-500">Patient</p>
             <p className="font-medium text-slate-900">{form.getValues('patientName')}</p>
@@ -965,10 +965,10 @@ export default function BookingWizard() {
             : renderReviewStep();
 
   return (
-    <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+    <div className="mx-auto w-full min-w-0 max-w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:max-w-5xl sm:p-8">
       <nav
         aria-label="Booking progress"
-        className="mb-8 flex flex-wrap gap-2 border-b border-slate-100 pb-6"
+        className="mb-8 flex min-w-0 max-w-full flex-wrap gap-2 border-b border-slate-100 pb-6"
       >
         {stepTitles.map((title, index) => (
           <div
@@ -991,12 +991,12 @@ export default function BookingWizard() {
         </p>
       ) : null}
 
-      <div className="mt-8 flex items-center justify-between gap-3 border-t border-slate-100 pt-6">
+      <div className="mt-8 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => setStep((current) => Math.max(0, current - 1))}
           disabled={step === 0}
-          className="min-h-11 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-11 w-full rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
         >
           Previous
         </button>
@@ -1007,7 +1007,7 @@ export default function BookingWizard() {
             onClick={() => {
               void nextStep();
             }}
-            className="min-h-11 rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+            className="min-h-11 w-full rounded-full bg-navy-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:w-auto"
             disabled={isSubmitting || (step === 0 && (isLoadingServices || !services.length))}
           >
             Continue
@@ -1016,7 +1016,7 @@ export default function BookingWizard() {
           <button
             type="button"
             onClick={() => void form.handleSubmit(onSubmit)()}
-            className="min-h-11 rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
+            className="min-h-11 w-full rounded-full bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 sm:w-auto"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Confirming Booking...' : 'Confirm Booking'}

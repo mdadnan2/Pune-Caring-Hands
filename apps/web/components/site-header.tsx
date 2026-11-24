@@ -26,16 +26,16 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-w-0 max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
+          className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-800 text-lg font-bold text-white">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-800 text-lg font-bold text-white">
             P
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-900 sm:text-lg">Pune Caring Hands</p>
+          <div className="min-w-0 max-[280px]:hidden">
+            <p className="truncate text-xs font-semibold text-slate-900 sm:text-lg">Pune Caring Hands</p>
             <p className="hidden text-xs text-slate-500 sm:block">Home healthcare</p>
           </div>
         </Link>
@@ -52,7 +52,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
           <a
             href="https://wa.me/+918605906083"
             target="_blank"
@@ -64,7 +64,7 @@ export function SiteHeader() {
           <Link
             href="/book"
             aria-label="Book a Service"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-navy-700 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-5"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-navy-700 px-2.5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-5"
           >
             <span className="sm:hidden">Book</span>
             <span className="hidden sm:inline">Book a Service</span>
