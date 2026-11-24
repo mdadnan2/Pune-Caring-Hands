@@ -3,8 +3,7 @@ import { serviceAreas } from '../../lib/site-data';
 export default function ServiceAreasPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <p className="text-sm font-semibold text-teal-700">Service Areas</p>
-      <h1 className="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
+      <h1 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
         Home healthcare across Pune
       </h1>
       <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">

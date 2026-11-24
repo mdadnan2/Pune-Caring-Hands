@@ -1,8 +1,7 @@
 export default function ContactPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-      <p className="text-sm font-semibold text-teal-700">Contact Us</p>
-      <h1 className="mt-2 max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
+      <h1 className="max-w-3xl text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
         Need help or a consultation?
       </h1>
       <div className="mt-6 grid gap-6 md:grid-cols-2">

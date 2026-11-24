@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const navItems = [
@@ -14,6 +15,14 @@ const navItems = [
 
 export function SiteHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const isBookActive = pathname === '/book';
 
   useEffect(() => {
     if (!isMenuOpen) return;
@@ -41,15 +50,23 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-6 lg:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md text-sm font-medium text-slate-600 transition hover:text-navy-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? 'page' : undefined}
+                className={`rounded-md text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
+                  active
+                    ? 'text-navy-700 bg-navy-50'
+                    : 'text-slate-600 hover:text-navy-700'
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -64,7 +81,10 @@ export function SiteHeader() {
           <Link
             href="/book"
             aria-label="Book a Service"
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-navy-700 px-2.5 py-2.5 text-sm font-semibold text-white transition hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-5"
+            aria-current={isBookActive ? 'page' : undefined}
+            className={`inline-flex min-h-11 items-center justify-center rounded-full px-2.5 py-2.5 text-sm font-semibold text-white transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:px-5 ${
+              isBookActive ? 'bg-navy-700 ring-2 ring-white' : 'bg-navy-700 hover:bg-navy-800'
+            }`}
           >
             <span className="sm:hidden">Book</span>
             <span className="hidden sm:inline">Book a Service</span>
@@ -88,16 +108,22 @@ export function SiteHeader() {
           className="border-t border-slate-100 bg-white px-4 py-3 lg:hidden"
         >
           <div className="mx-auto grid max-w-7xl gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMenuOpen(false)}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setIsMenuOpen(false)}
+                  aria-current={active ? 'page' : undefined}
+                  className={`rounded-lg px-3 py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
+                    active ? 'text-navy-700 bg-navy-50' : 'text-slate-700'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
           </div>
         </nav>
       ) : null}
