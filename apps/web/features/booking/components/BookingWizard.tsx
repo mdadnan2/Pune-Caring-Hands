@@ -407,7 +407,7 @@ export default function BookingWizard() {
     }
 
     return (
-      <div className="grid min-w-0 max-w-full gap-4 md:grid-cols-2">
+      <div className="grid min-w-0 max-w-full gap-3 sm:gap-4 md:grid-cols-2">
         {services.map((service) => (
           <button
             key={service.id}
@@ -430,7 +430,7 @@ export default function BookingWizard() {
               form.setValue('serviceSlug', service.slug, { shouldValidate: true });
               setApiError('');
             }}
-            className={`w-full min-w-0 max-w-full rounded-2xl border p-5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 ${
+            className={`w-full min-w-0 max-w-full rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy-700 focus-visible:ring-offset-2 sm:p-5 ${
               selectedServiceId === service.id
                 ? 'border-navy-700 bg-navy-50 shadow-sm'
                 : 'border-slate-200 bg-white hover:border-slate-300'
@@ -451,7 +451,7 @@ export default function BookingWizard() {
   };
 
   const renderPatientStep = () => (
-    <div className="grid min-w-0 gap-4 md:grid-cols-2">
+    <div className="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2">
       <label className="space-y-2 text-sm font-medium text-slate-700">
         Full name
         <input
@@ -580,7 +580,7 @@ export default function BookingWizard() {
 
     if (slug === 'doctor-home-consultation') {
       return (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
@@ -625,7 +625,7 @@ export default function BookingWizard() {
             ) : null}
           </label>
 
-          <div className="grid min-w-0 gap-4 md:grid-cols-2">
+          <div className="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2">
             <label className="space-y-2 text-sm font-medium text-slate-700">
               Symptom duration
               <input
@@ -665,7 +665,7 @@ export default function BookingWizard() {
 
     if (slug === 'ecg-at-home') {
       return (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
             We will coordinate the ECG visit details for your preferred time.
           </div>
@@ -851,7 +851,7 @@ export default function BookingWizard() {
   const renderSlotStep = () => {
     if (appointmentType === 'IMMEDIATE') {
       return (
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-700 sm:p-6">
           The earliest available doctor request will be reviewed by our care team. No specific slot
           is selected at this stage.
         </div>
@@ -859,7 +859,7 @@ export default function BookingWizard() {
     }
 
     return (
-      <div className="space-y-5">
+      <div className="space-y-4 sm:space-y-5">
         <label className="block space-y-2 text-sm font-medium text-slate-700">
           Appointment date
           <input
@@ -915,7 +915,7 @@ export default function BookingWizard() {
     if (!selectedService) return null;
 
     return (
-      <div className="space-y-6 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+      <div className="space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:space-y-6 sm:p-6">
         <div>
           <p className="text-sm text-slate-500">Selected service</p>
           <h3 className="mt-1 text-2xl font-bold text-slate-900">{selectedService.name}</h3>
@@ -965,15 +965,15 @@ export default function BookingWizard() {
             : renderReviewStep();
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:max-w-5xl sm:p-8">
+    <div className="mx-auto w-full min-w-0 max-w-full rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:max-w-5xl sm:p-8">
       <nav
         aria-label="Booking progress"
-        className="mb-8 min-w-0 max-w-full border-b border-slate-100 pb-6"
+        className="mb-6 min-w-0 max-w-full border-b border-slate-100 pb-4 sm:mb-8 sm:pb-6"
       >
         <p className="text-sm font-semibold text-slate-900 sm:hidden">
           Step {step + 1} of {stepTitles.length} · {stepTitles[step]}
         </p>
-        <ol className="mt-4 flex w-full min-w-0 max-w-full items-start sm:mt-0">
+        <ol className="mt-3 flex w-full min-w-0 max-w-full items-start sm:mt-0">
           {stepTitles.map((title, index) => {
             const isCompleted = index < step;
             const isCurrent = index === step;
@@ -1026,12 +1026,12 @@ export default function BookingWizard() {
       {content}
 
       {apiError ? (
-        <p role="alert" className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
+        <p role="alert" className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
           {apiError}
         </p>
       ) : null}
 
-      <div className="mt-8 flex flex-col gap-3 border-t border-slate-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:mt-8 sm:flex-row sm:items-center sm:justify-between sm:pt-6">
         <button
           type="button"
           onClick={() => setStep((current) => Math.max(0, current - 1))}
