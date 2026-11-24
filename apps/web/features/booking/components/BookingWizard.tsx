@@ -968,19 +968,59 @@ export default function BookingWizard() {
     <div className="mx-auto w-full min-w-0 max-w-full rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:max-w-5xl sm:p-8">
       <nav
         aria-label="Booking progress"
-        className="mb-8 flex min-w-0 max-w-full flex-wrap gap-2 border-b border-slate-100 pb-6"
+        className="mb-8 min-w-0 max-w-full border-b border-slate-100 pb-6"
       >
-        {stepTitles.map((title, index) => (
-          <div
-            key={title}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold sm:text-sm ${
-              index === step ? 'bg-navy-700 text-white' : 'bg-slate-100 text-slate-600'
-            }`}
-            aria-current={index === step ? 'step' : undefined}
-          >
-            {index + 1}. {title}
-          </div>
-        ))}
+        <p className="text-sm font-semibold text-slate-900 sm:hidden">
+          Step {step + 1} of {stepTitles.length} · {stepTitles[step]}
+        </p>
+        <ol className="mt-4 flex w-full min-w-0 max-w-full items-start sm:mt-0">
+          {stepTitles.map((title, index) => {
+            const isCompleted = index < step;
+            const isCurrent = index === step;
+
+            return (
+              <li
+                key={title}
+                className="relative flex min-w-0 flex-1 justify-center"
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                {index > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 right-1/2 top-4 h-0.5 ${
+                      isCompleted || isCurrent ? 'bg-teal-500' : 'bg-slate-200'
+                    }`}
+                  />
+                ) : null}
+                <div className="relative z-10 flex min-w-0 flex-col items-center">
+                  <span
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold ${
+                      isCompleted
+                        ? 'border-teal-600 bg-teal-600 text-white'
+                        : isCurrent
+                          ? 'border-navy-700 bg-navy-700 text-white'
+                          : 'border-slate-300 bg-white text-slate-500'
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {isCompleted ? '✓' : index + 1}
+                  </span>
+                  <span
+                    className={`mt-2 hidden max-w-full text-center text-xs font-semibold sm:block ${
+                      isCurrent ? 'text-navy-800' : isCompleted ? 'text-teal-700' : 'text-slate-500'
+                    }`}
+                  >
+                    {title}
+                  </span>
+                  <span className="sr-only">
+                    {isCompleted ? 'Completed: ' : isCurrent ? 'Current step: ' : 'Upcoming: '}
+                    {title}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       </nav>
 
       {content}
