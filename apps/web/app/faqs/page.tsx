@@ -2,7 +2,7 @@ import { faqs } from '../../lib/site-data';
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
         Frequently asked questions
       </h1>
