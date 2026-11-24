@@ -10,7 +10,7 @@ export default function ServiceDetailsPage({ params }: { params: { slug: string 
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <p className="text-sm font-semibold text-teal-700">Service overview</p>
         <h1 className="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
@@ -20,7 +20,7 @@ export default function ServiceDetailsPage({ params }: { params: { slug: string 
           {service.description}
         </p>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-2">
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
             <h2 className="text-xl font-semibold text-slate-900">What’s included</h2>
             <ul className="mt-4 space-y-3 text-sm text-slate-600">

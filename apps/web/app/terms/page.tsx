@@ -1,6 +1,6 @@
 export default function TermsPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
       <h1 className="text-4xl font-bold text-slate-900">Terms & Conditions</h1>
       <div className="mt-6 space-y-4 text-slate-600">
         <p>These terms govern the use of Pune Caring Hands services and support bookings.</p>

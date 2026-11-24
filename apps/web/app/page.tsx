@@ -74,7 +74,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <div className="mb-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <SectionHeading
@@ -98,10 +98,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-100 py-16 sm:py-20 lg:py-24">
+      <section className="bg-slate-100 py-12 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading eyebrow="How It Works" title="A simple flow from booking to care" />
-          <div className="relative mt-10 grid gap-8 md:grid-cols-3 md:gap-10">
+          <div className="relative mt-8 grid gap-8 md:grid-cols-3 md:gap-10">
             {[
               ['01', 'Choose service', 'Select the care you need and share your preferences.'],
               [
@@ -136,9 +136,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 lg:py-24">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
         <SectionHeading eyebrow="Care Information" title="Clear options for care at home" />
-        <div className="mt-10 grid gap-x-8 gap-y-7 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-x-8 gap-y-7 md:grid-cols-2 lg:grid-cols-4">
           {[
             ['Home healthcare support', 'Explore services that can be arranged for care at home.'],
             ['Clear booking details', 'Review service information and pricing in the booking flow.'],
@@ -154,7 +154,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white py-16 sm:py-20 lg:py-24">
+      <section className="bg-white py-12 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -170,7 +170,7 @@ export default function HomePage() {
               View Testimonials
             </Link>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3 lg:gap-8">
+          <div className="mt-8 grid gap-6 md:grid-cols-3 lg:gap-8">
             {testimonials.map((item) => (
               <blockquote
                 key={item.name}
@@ -186,7 +186,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="bg-slate-50 py-16 sm:py-20 lg:py-24">
+      <section className="bg-slate-50 py-12 sm:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             eyebrow="Service Areas"
@@ -206,7 +206,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="rounded-3xl bg-navy-800 p-8 text-white md:p-12">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>

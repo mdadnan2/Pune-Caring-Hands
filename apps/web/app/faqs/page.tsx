@@ -2,12 +2,12 @@ import { faqs } from '../../lib/site-data';
 
 export default function FaqPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
       <p className="text-sm font-semibold text-teal-700">FAQs</p>
       <h1 className="mt-2 text-3xl font-bold leading-tight text-slate-900 sm:text-4xl">
         Frequently asked questions
       </h1>
-      <div className="mt-8 space-y-3">
+      <div className="mt-6 space-y-3">
         {faqs.map((item) => (
           <div
             key={item.question}
